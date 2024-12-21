@@ -92,17 +92,70 @@
         <p>To install SensingSP™ and its dependencies, run the following command:</p>
         <pre><code>pip install sensingsp</code></pre>
 
-        <h2>Example</h2>
-        <p>The radar range equation is:</p>
+        <h2>Example: Radar Equation and sensingsp Ray Tracing</h2>
+        <pre><code>
+            import sensingsp as ssp
+            
+            ssp.utils.initialize_environment()
+            
+            radar = ssp.radar.utils.addRadar(
+                radarSensor = ssp.radar.utils.RadarSensorsCategory.TI_Cascade_AWR2243,
+                location_xyz = [-3,0,1] )
+            
+            ssp.radar.utils.addTarget(
+                refRadar = radar,
+                range = 5 ,  RCS0=3 )
+            
+            ssp.utils.initialize_simulation()
+        <code><pre>
+        <pre><code>
+            while ssp.config.run():
+                path_d_drate_amp = ssp.raytracing.Path_RayTracing_frame()
+                d_drate_amp=path_d_drate_amp[0][0][0][0][0][0][0]
+                print(d_drate_amp)
+                ssp.utils.increaseCurrentFrame()
+        <code><pre>
+        
         <p>$$P_r = \frac{P_t G_t G_r \lambda^2 \sigma}{(4\pi)^3 R_t^2 R_r^2 L}$$</p>
-        <p>For monostatic radar systems, it simplifies to:</p>
+        <pre><code>
+            import numpy as np
+            
+            sensor_power_dBm = 12
+            NTX = 4*3
+            tx_power_dBm = sensor_power_dBm - 10*np.log10(NTX)            # Transmit power in dBm
+            tx_gain_dB = 0                # Transmit antenna gain in dB
+            rx_gain_dB = 0                # Receive antenna gain in dB
+            frequency = 76e9              # Operating frequency in Hz
+            wavelength = ssp.LightSpeed / frequency    # Wavelength in meters
+            range_m = 10/2
+            rcs = 3                       # Radar cross-section (RCS) in square meters
+            
+            # Convert power from dBm to watts
+            tx_power_watts = 10 ** ((tx_power_dBm - 30) / 10)
+            # Convert gains from dB to linear scale
+            tx_gain_linear = 10 ** (tx_gain_dB / 10)
+            rx_gain_linear = 10 ** (rx_gain_dB / 10)
+            
+            # Calculate the received power using the radar range equation
+            rx_power_watts = (tx_power_watts * tx_gain_linear * rx_gain_linear * wavelength**2 * rcs) / \
+                             ((4 * np.pi)**3 * range_m**4)
+            
+            print(f" sqrt(Received Pow): {np.sqrt(rx_power_watts)} ")
+        <code><pre>
+
+        <pre><code>
+            # Display the results
+            print(f" Radar Equation: amp = {np.sqrt(rx_power_watts)} ")
+            print(f" SensingSP Ray Tracing output: amp = {d_drate_amp[2]} ")
+        <code><pre>
+<!--         <p>For monostatic radar systems, it simplifies to:</p>
         <p>$$P_r = \frac{P_t G^2 \lambda^2 \sigma}{(4\pi)^3 R^4 L}$$</p>
 
         <p>For a modern array detection explanation, watch this video:</p>
         <a href="https://www.youtube.com/watch?v=P-IgU-CYxEo" target="_blank">
             <img src="https://img.youtube.com/vi/P-IgU-CYxEo/0.jpg" alt="Radar Signal Processing" style="max-width: 100%; border-radius: 5px;">
         </a>
-
+ -->
         <h2>Contact</h2>
         <p>For inquiries, suggestions, or contributions, feel free to reach out:</p>
         <p><strong>Moein Ahmadi</strong></p>
