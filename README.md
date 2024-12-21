@@ -18,6 +18,20 @@ pip install sensingsp
 The source code for SensingSP™ is available on GitHub:
 [https://github.com/sensingsp/sensingsp](https://github.com/sensingsp/sensingsp)
 
+## Example
+The radar range equation is:
+
+$$
+P_r = \frac{P_t G_t G_r \lambda^2 \sigma}{(4\pi)^3 R_t^2 R_r^2 L}
+$$
+
+For monostatic radar systems, it simplifies to:
+
+$$
+P_r = \frac{P_t G^2 \lambda^2 \sigma}{(4\pi)^3 R^4 L}
+$$
+
+
 ## Contact
 For inquiries, suggestions, or contributions, feel free to reach out:
 
