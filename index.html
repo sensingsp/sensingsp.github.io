@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensing Signal Processing (SensingSP™)</title>
+
+    <!-- Prism.js CSS for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.css" rel="stylesheet" />
+    <!-- Prism.js core and Python language support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -35,14 +43,6 @@
             color: #333;
         }
 
-        code {
-            font-family: "Courier New", Courier, monospace;
-            background: #f4f4f4;
-            padding: 5px 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
         pre {
             background: #f4f4f4;
             border: 1px solid #ddd;
@@ -53,6 +53,17 @@
             margin: 20px auto;
             max-width: 90%;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        pre.output {
+            background: #222;
+            color: #0f0;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: "Courier New", Courier, monospace;
+            white-space: pre-wrap;
+            margin: 10px auto;
         }
 
         a {
@@ -90,10 +101,11 @@
 
         <h2>Installation</h2>
         <p>To install SensingSP™ and its dependencies, run the following command:</p>
-        <pre><code>pip install sensingsp</code></pre>
+        <pre><code class="language-bash">pip install sensingsp</code></pre>
 
-        <h2>Example: Radar Equation and SensingSP Ray Tracing</h2>
-        <pre><code>
+        <h2>Example 1: Radar Equation and SensingSP Ray Tracing</h2>
+        <h3>SensingSP Ray Tracing</h3>
+        <pre><code class="language-python">
 import sensingsp as ssp
 
 ssp.utils.initialize_environment()
@@ -108,18 +120,19 @@ ssp.radar.utils.addTarget(
 
 ssp.utils.initialize_simulation()
         </code></pre>
-
-        <pre><code>
+        <pre><code class="language-python">
 while ssp.config.run():
     path_d_drate_amp = ssp.raytracing.Path_RayTracing_frame()
-    d_drate_amp = path_d_drate_amp[0][0][0][0][0][0][0]
+    d_drate_amp=path_d_drate_amp[0][0][0][0][0][0][0]
     print(d_drate_amp)
     ssp.utils.increaseCurrentFrame()
         </code></pre>
 
+        <h3>Radar Equation</h3>
+        
         <p>$$P_r = \frac{P_t G_t G_r \lambda^2 \sigma}{(4\pi)^3 R_t^2 R_r^2 L}$$</p>
 
-        <pre><code>
+        <pre><code class="language-python">
 import numpy as np
 
 sensor_power_dBm = 12
@@ -144,12 +157,17 @@ rx_power_watts = (tx_power_watts * tx_gain_linear * rx_gain_linear * wavelength*
 
 print(f" sqrt(Received Pow): {np.sqrt(rx_power_watts)} ")
         </code></pre>
-
-        <pre><code>
+        <h3>Compare results</h3>
+        <pre><code class="language-python">
 # Display the results
 print(f" Radar Equation: amp = {np.sqrt(rx_power_watts)} ")
 print(f" SensingSP Ray Tracing output: amp = {d_drate_amp[2]} ")
-        </code></pre>
+                    </code></pre>
+            
+        <pre class="output">
+Radar Equation: amp = 2.2295761512298927e-07 
+SensingSP Ray Tracing output: amp = 2.2292628849539048e-07
+        </pre>
 
         <h2>Contact</h2>
         <p>For inquiries, suggestions, or contributions, feel free to reach out:</p>
