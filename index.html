@@ -5,61 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensing Signal Processing (SensingSP™)</title>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        header {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        code {
+            font-family: "Courier New", Courier, monospace;
+            background: #f4f4f4;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        pre {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin: 20px auto; /* Center the block */
+            max-width: 90%; /* Adjust for responsiveness */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #777;
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>Sensing Signal Processing (SensingSP™)</h1>
     </header>
 
-    <section id="overview">
+    <div class="container">
         <h2>Overview</h2>
         <p><strong>SensingSP™</strong> is an open-source library designed for simulating electromagnetic sensing systems and implementing signal processing and machine learning algorithms.</p>
-    </section>
 
-    <section id="features">
         <h2>Features</h2>
         <ul>
             <li>Simulate electromagnetic-based sensing systems.</li>
             <li>Implement advanced radar and signal processing algorithms.</li>
             <li>Leverage machine learning techniques for enhanced sensing capabilities.</li>
         </ul>
-    </section>
 
-    <section id="installation">
         <h2>Installation</h2>
         <p>To install SensingSP™ and its dependencies, run the following command:</p>
         <pre><code>pip install sensingsp</code></pre>
-    </section>
 
-    <section id="project-source-code">
-        <h2>Project Source Code</h2>
-        <p>The source code for SensingSP™ is available on GitHub:</p>
-        <p><a href="https://github.com/sensingsp/sensingsp" target="_blank">https://github.com/sensingsp/sensingsp</a></p>
-    </section>
-
-    <section id="example">
         <h2>Example</h2>
         <p>The radar range equation is:</p>
-        <p>
-            $$P_r = \frac{P_t G_t G_r \lambda^2 \sigma}{(4\pi)^3 R_t^2 R_r^2 L}$$
-        </p>
+        <p>$$P_r = \frac{P_t G_t G_r \lambda^2 \sigma}{(4\pi)^3 R_t^2 R_r^2 L}$$</p>
         <p>For monostatic radar systems, it simplifies to:</p>
-        <p>
-            $$P_r = \frac{P_t G^2 \lambda^2 \sigma}{(4\pi)^3 R^4 L}$$
-        </p>
+        <p>$$P_r = \frac{P_t G^2 \lambda^2 \sigma}{(4\pi)^3 R^4 L}$$</p>
+
         <p>For a modern array detection explanation, watch this video:</p>
         <a href="https://www.youtube.com/watch?v=P-IgU-CYxEo" target="_blank">
-            <img src="https://img.youtube.com/vi/P-IgU-CYxEo/0.jpg" alt="Radar Signal Processing">
+            <img src="https://img.youtube.com/vi/P-IgU-CYxEo/0.jpg" alt="Radar Signal Processing" style="max-width: 100%; border-radius: 5px;">
         </a>
-    </section>
 
-    <section id="contact">
         <h2>Contact</h2>
         <p>For inquiries, suggestions, or contributions, feel free to reach out:</p>
         <p><strong>Moein Ahmadi</strong></p>
         <p>Email: <a href="mailto:moein.ahmadi@uni.lu">moein.ahmadi@uni.lu</a></p>
-        <p><strong>Signal Processing Applications in Radar and Communications (SPARC)</strong> group</p>
-        <p><strong>University of Luxembourg</strong></p>
-    </section>
+    </div>
+
+    <footer>
+        &copy; 2024 SensingSP™
+    </footer>
 </body>
 </html>
