@@ -31,6 +31,9 @@ $$
 P_r = \frac{P_t G^2 \lambda^2 \sigma}{(4\pi)^3 R^4 L}
 $$
 
+For a modern array detection explanation, watch this video:
+
+[![Radar Signal Processing](https://img.youtube.com/vi/P-IgU-CYxEo/0.jpg)](https://www.youtube.com/watch?v=P-IgU-CYxEo)
 
 ## Contact
 For inquiries, suggestions, or contributions, feel free to reach out:
