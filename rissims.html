@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FMCW Radar Simulation with RIS</title>
+  <!-- Include Plotly.js library -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .plot-container {
+      width: 600px;
+      height: 400px;
+      margin-bottom: 30px;
+    }
+    textarea {
+      width: 600px;
+      height: 80px;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>FMCW Radar Simulation with RIS</h1>
+  <p>
+    This simulation computes the beampattern of a 77 GHz FMCW radar with and without a RIS, and displays 1D sweeps, 2D heatmaps, and a 3D geometry plot.
+  </p>
+  <p>
+    <strong>RIS Segment Parameters:</strong> Enter the matrix rows (each row separated by a new line, with comma‐separated numbers). For example, you can enter:
+  </p>
+  <pre>
+4, 4, 0, 0, 0, 0, 0
+5, 4, 4, 0, 0, 0, 0
+6, 3, 9, 4, 0, 0, 0
+  </pre>
+  <p>
+    Or use a single segment like:
+  </p>
+  <pre>
+20, 5, 0, 0, 0, 0, 20
+  </pre>
+  <textarea id="segmentParamsInput">
+4, 4, 0, 0, 0, 0, 0
+5, 4, 4, 0, 0, 0, 0
+6, 3, 9, 4, 0, 0, 0
+  </textarea>
+  <br>
+  <button onclick="runSimulation()">Run Simulation</button>
+
+  <!-- Divs for plots -->
+  <div id="plot_x" class="plot-container"></div>
+  <div id="plot_y" class="plot-container"></div>
+  <div id="plot_z" class="plot-container"></div>
+  <div id="plot_xy_RIS" class="plot-container"></div>
+  <div id="plot_xy_Radar" class="plot-container"></div>
+  <div id="plot_yz_RIS" class="plot-container"></div>
+  <div id="plot_yz_Radar" class="plot-container"></div>
+  <div id="plot_3d" class="plot-container" style="height:500px;"></div>
+
+  <script>
+    ////////// Utility Functions //////////
+
+    function vectorSub(a, b) {
+      return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+    }
+    function norm(v) {
+      return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    }
+    function deg2rad(deg) {
+      return deg * Math.PI / 180;
+    }
+    function rad2deg(rad) {
+      return rad * 180 / Math.PI;
+    }
+    function linspace(start, stop, num) {
+      let arr = [];
+      let step = (stop - start) / (num - 1);
+      for (let i = 0; i < num; i++) {
+        arr.push(start + step * i);
+      }
+      return arr;
+    }
+
+    ////////// Simple Complex Number Library //////////
+
+    function complex(re, im) {
+      return { re: re, im: im };
+    }
+    function cAdd(a, b) {
+      return { re: a.re + b.re, im: a.im + b.im };
+    }
+    function cMul(a, b) {
+      return { re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re };
+    }
+    function cScale(a, scalar) {
+      return { re: a.re * scalar, im: a.im * scalar };
+    }
+    function cExp(theta) {
+      return { re: Math.cos(theta), im: Math.sin(theta) };
+    }
+    function cAbs(a) {
+      return Math.sqrt(a.re*a.re + a.im*a.im);
+    }
+
+    ////////// Parsing the RIS Segment Parameters from the UI //////////
+
+    function parseSegmentParams(text) {
+      // Split text into lines, remove brackets/semicolons, then split by comma/whitespace.
+      let lines = text.trim().split('\n');
+      let result = [];
+      for (let line of lines) {
+        line = line.replace(/[\[\];]/g, '').trim();
+        if (line.length === 0) continue;
+        let parts = line.split(/[\s,]+/);
+        let numbers = parts.map(Number).filter(n => !isNaN(n));
+        if (numbers.length > 0) result.push(numbers);
+      }
+      return result;
+    }
+
+    ////////// Radar Simulation Functions //////////
+
+    // Received power for the RIS-assisted link (simplified model)
+    function received_power_simplified(Pt, Gt, Gr, Gris, sigma, lambda, R_tx_ris, R_ris_scatter, R_scatter_ris, R_ris_rx) {
+      return (Pt * Gt * Math.pow(Gris, 4) * Gr * sigma * Math.pow(lambda, 6)) /
+             (Math.pow(4*Math.PI, 7) * Math.pow(R_tx_ris, 2) * Math.pow(R_ris_scatter, 2) *
+              Math.pow(R_scatter_ris, 2) * Math.pow(R_ris_rx, 2));
+    }
+
+    // Received power for the direct radar link (without RIS)
+    function received_power_radar(Pt, Gt, Gr, sigma, lambda, R1, R2) {
+      return (Pt * Gt * Gr * sigma * Math.pow(lambda, 2)) /
+             (Math.pow(4*Math.PI, 3) * Math.pow(R1, 2) * Math.pow(R2, 2));
+    }
+
+    // Compute beampattern for the RIS-assisted link
+    function beampattern_RIS(risPositions, risPhaseAmp, radarTX, targetPos, radarRX,
+                             Pt, Gt, Gr, Gris, sigma, lambda, gainEffect) {
+      let numRIS = risPositions.length;
+      let totalField = { re: 0, im: 0 };
+      for (let i = 0; i < numRIS; i++) {
+        for (let j = 0; j < numRIS; j++) {
+          let R_tx_ris   = norm(vectorSub(radarTX, risPositions[i]));
+          let R_ris_scatter = norm(vectorSub(risPositions[i], targetPos));
+          let R_scatter_ris = norm(vectorSub(targetPos, risPositions[j]));
+          let R_ris_rx   = norm(vectorSub(radarRX, risPositions[j]));
+          let pathLength = R_tx_ris + R_ris_scatter + R_scatter_ris + R_ris_rx;
+          let amplitude;
+          if (gainEffect) {
+            let Pr = received_power_simplified(Pt, Gt, Gr, Gris, sigma, lambda,
+                                               R_tx_ris, R_ris_scatter, R_scatter_ris, R_ris_rx);
+            amplitude = Math.sqrt(Pr);
+          } else {
+            amplitude = 1;
+          }
+          // Retrieve phase (in degrees) and amplitude (set to 1)
+          let phase_i = risPhaseAmp[i][0];
+          let amp_i   = risPhaseAmp[i][1];
+          let phase_j = risPhaseAmp[j][0];
+          let amp_j   = risPhaseAmp[j][1];
+          // Adjust path length by an effective phase shift
+          pathLength = pathLength + ((phase_i + amp_i) / 360) * lambda;
+          amplitude = amplitude * amp_i * amp_j;
+          let phi = 2 * Math.PI / lambda * pathLength;
+          let contribution = cScale(cExp(phi), amplitude);
+          totalField = cAdd(totalField, contribution);
+        }
+      }
+      return Math.pow(cAbs(totalField), 2);
+    }
+
+    // Compute beampattern for the direct radar link (without RIS)
+    function beampattern_radar_withoutRIS(radarTX, targetPos, radarRX,
+                                          Pt, Gt, Gr, sigma, lambda, gainEffect) {
+      let R1 = norm(vectorSub(radarTX, targetPos));
+      let R2 = norm(vectorSub(targetPos, radarRX));
+      let pathLength = R1 + R2;
+      let amplitude;
+      if (gainEffect) {
+        let Pr = received_power_radar(Pt, Gt, Gr, sigma, lambda, R1, R2);
+        amplitude = Math.sqrt(Pr);
+      } else {
+        amplitude = 1;
+      }
+      return Math.pow(amplitude, 2);
+    }
+
+    ////////// RIS Generation Functions //////////
+
+    // Generate RIS element positions and phase/amplitude from segment parameters.
+    // Each segment is defined as: [numRIS_x, numRIS_y, P_x, P_y, P_z, azimuthAngle, elevationAngle]
+    function generateRIS(segmentParams, lambda) {
+      let risPositions = [];
+      let risPhaseAmp = [];
+      for (let seg = 0; seg < segmentParams.length; seg++) {
+        let segParam = segmentParams[seg];
+        let numRIS_x = segParam[0];
+        let numRIS_y = segParam[1];
+        // Scale the RIS center by half-wavelength (element spacing)
+        let risCenterSeg = [segParam[2] * (lambda/2), segParam[3] * (lambda/2), segParam[4] * (lambda/2)];
+        let steerAz = segParam[5];  // in degrees
+        let steerEl = segParam[6];  // in degrees
+        let risSpacing = lambda / 2;
+        for (let ix = 0; ix < numRIS_x; ix++) {
+          for (let iy = 0; iy < numRIS_y; iy++) {
+            let xPos = risCenterSeg[0] + ix * risSpacing;
+            let yPos = risCenterSeg[1] + iy * risSpacing;
+            let zPos = risCenterSeg[2];
+            risPositions.push([xPos, yPos, zPos]);
+            // Compute phase shift (0-indexed)
+            let phi0 = Math.PI * ( ix * Math.sin(deg2rad(steerAz)) +
+                                   iy * Math.cos(deg2rad(steerAz)) * Math.sin(deg2rad(steerEl)) );
+            risPhaseAmp.push([rad2deg(phi0), 1]);
+          }
+        }
+      }
+      return { risPositions: risPositions, risPhaseAmp: risPhaseAmp };
+    }
+
+    // Adjust RIS positions so that their mean is at the desired center.
+    function adjustRISPositions(risPositions, desiredCenter) {
+      let n = risPositions.length;
+      let sumX = 0, sumY = 0, sumZ = 0;
+      for (let i = 0; i < n; i++) {
+        sumX += risPositions[i][0];
+        sumY += risPositions[i][1];
+        sumZ += risPositions[i][2];
+      }
+      let meanX = sumX / n, meanY = sumY / n, meanZ = sumZ / n;
+      for (let i = 0; i < n; i++) {
+        risPositions[i][0] = risPositions[i][0] - meanX + desiredCenter[0];
+        risPositions[i][1] = risPositions[i][1] - meanY + desiredCenter[1];
+        risPositions[i][2] = risPositions[i][2] - meanZ + desiredCenter[2];
+      }
+      return risPositions;
+    }
+
+    ////////// Main Simulation Function //////////
+
+    function runSimulation() {
+      // Read RIS segment parameters from the textarea and parse them.
+      let segmentParamsText = document.getElementById('segmentParamsInput').value;
+      let segmentParams = parseSegmentParams(segmentParamsText);
+      if (segmentParams.length === 0) {
+        alert("Please enter valid RIS segment parameters.");
+        return;
+      }
+      
+      // Radar and target parameters
+      let c = 3e8;
+      let f = 77e9;
+      let lambda = c / f;
+      let radarTX = [0, 0, 0];
+      let radarRX = [0, 0, 0];
+      let target0 = [1, 0, 0];
+      let desiredRISCenter = [0.5, 0, 0.5];
+
+      // Generate RIS elements using the user-defined segment parameters.
+      let risData = generateRIS(segmentParams, lambda);
+      let risPositions = adjustRISPositions(risData.risPositions, desiredRISCenter);
+      let risPhaseAmp = risData.risPhaseAmp;
+
+      // Radar transmission parameters
+      let Pt = 1.0, Gt = 10, Gr = 10, Gris = 5, sigma = 1.0;
+      let gainEffect = true;
+
+      // For performance, use reduced resolution.
+      let N = 50;
+
+      // 1D Beampattern Sweeps
+
+      // Sweep in x-direction
+      let xsweep = linspace(0.1, 2, N);
+      let patternRIS_x = [];
+      let patternRadar_x = [];
+      for (let i = 0; i < xsweep.length; i++) {
+        let targetPos = [xsweep[i], 0, 0];
+        patternRIS_x.push(beampattern_RIS(risPositions, risPhaseAmp, radarTX, targetPos, radarRX,
+                                          Pt, Gt, Gr, Gris, sigma, lambda, gainEffect));
+        patternRadar_x.push(beampattern_radar_withoutRIS(radarTX, targetPos, radarRX,
+                                                         Pt, Gt, Gr, sigma, lambda, gainEffect));
+      }
+
+      // Sweep in y-direction
+      let ysweep = linspace(-1, 1, N);
+      let patternRIS_y = [];
+      let patternRadar_y = [];
+      for (let i = 0; i < ysweep.length; i++) {
+        let targetPos = [1, ysweep[i], 0];
+        patternRIS_y.push(beampattern_RIS(risPositions, risPhaseAmp, radarTX, targetPos, radarRX,
+                                          Pt, Gt, Gr, Gris, sigma, lambda, gainEffect));
+        patternRadar_y.push(beampattern_radar_withoutRIS(radarTX, targetPos, radarRX,
+                                                         Pt, Gt, Gr, sigma, lambda, gainEffect));
+      }
+
+      // Sweep in z-direction
+      let zsweep = linspace(-1, 1, N);
+      let patternRIS_z = [];
+      let patternRadar_z = [];
+      for (let i = 0; i < zsweep.length; i++) {
+        let targetPos = [1, 0, zsweep[i]];
+        patternRIS_z.push(beampattern_RIS(risPositions, risPhaseAmp, radarTX, targetPos, radarRX,
+                                          Pt, Gt, Gr, Gris, sigma, lambda, gainEffect));
+        patternRadar_z.push(beampattern_radar_withoutRIS(radarTX, targetPos, radarRX,
+                                                         Pt, Gt, Gr, sigma, lambda, gainEffect));
+      }
+
+      // 2D Beampattern Visualization (x-y Plane)
+      let Nx = 20, Ny = 20;
+      let xsweep2 = linspace(0.1, 2, Nx);
+      let ysweep2 = linspace(-1, 1, Ny);
+      let patternRIS_xy = [];
+      let patternRadar_xy = [];
+      for (let i = 0; i < Nx; i++) {
+        let rowRIS = [];
+        let rowRadar = [];
+        for (let j = 0; j < Ny; j++) {
+          let targetPos = [xsweep2[i], ysweep2[j], 0];
+          rowRIS.push(beampattern_RIS(risPositions, risPhaseAmp, radarTX, targetPos, radarRX,
+                                      Pt, Gt, Gr, Gris, sigma, lambda, gainEffect));
+          rowRadar.push(beampattern_radar_withoutRIS(radarTX, targetPos, radarRX,
+                                                    Pt, Gt, Gr, sigma, lambda, gainEffect));
+        }
+        patternRIS_xy.push(rowRIS);
+        patternRadar_xy.push(rowRadar);
+      }
+
+      // 2D Beampattern Visualization (y-z Plane)
+      let zsweep2 = linspace(-1, 2, Nx);
+      let ysweep2_yz = linspace(-1, 1, Ny);
+      let patternRIS_yz = [];
+      let patternRadar_yz = [];
+      for (let i = 0; i < Nx; i++) {
+        let rowRIS = [];
+        let rowRadar = [];
+        for (let j = 0; j < Ny; j++) {
+          let targetPos = [0, ysweep2_yz[j], zsweep2[i]];
+          rowRIS.push(beampattern_RIS(risPositions, risPhaseAmp, radarTX, targetPos, radarRX,
+                                      Pt, Gt, Gr, Gris, sigma, lambda, gainEffect));
+          rowRadar.push(beampattern_radar_withoutRIS(radarTX, targetPos, radarRX,
+                                                    Pt, Gt, Gr, sigma, lambda, gainEffect));
+        }
+        patternRIS_yz.push(rowRIS);
+        patternRadar_yz.push(rowRadar);
+      }
+
+      ////////// Plotting with Plotly //////////
+
+      // Plot: Beampattern vs. x-coordinate
+      var trace1_x = {
+        x: xsweep,
+        y: patternRIS_x.map(v => 10 * Math.log10(v)),
+        mode: 'lines',
+        name: 'With RIS'
+      };
+      var trace2_x = {
+        x: xsweep,
+        y: patternRadar_x.map(v => 10 * Math.log10(v)),
+        mode: 'lines',
+        name: 'Without RIS'
+      };
+      Plotly.newPlot('plot_x', [trace1_x, trace2_x], {
+        title: 'Beampattern vs. x-coordinate',
+        xaxis: { title: 'x (m)' },
+        yaxis: { title: 'Power (dB)' }
+      });
+
+      // Plot: Beampattern vs. y-coordinate
+      var trace1_y = {
+        x: ysweep,
+        y: patternRIS_y.map(v => 10 * Math.log10(v)),
+        mode: 'lines',
+        name: 'With RIS'
+      };
+      var trace2_y = {
+        x: ysweep,
+        y: patternRadar_y.map(v => 10 * Math.log10(v)),
+        mode: 'lines',
+        name: 'Without RIS'
+      };
+      Plotly.newPlot('plot_y', [trace1_y, trace2_y], {
+        title: 'Beampattern vs. y-coordinate',
+        xaxis: { title: 'y (m)' },
+        yaxis: { title: 'Power (dB)' }
+      });
+
+      // Plot: Beampattern vs. z-coordinate
+      var trace1_z = {
+        x: zsweep,
+        y: patternRIS_z.map(v => 10 * Math.log10(v)),
+        mode: 'lines',
+        name: 'With RIS'
+      };
+      var trace2_z = {
+        x: zsweep,
+        y: patternRadar_z.map(v => 10 * Math.log10(v)),
+        mode: 'lines',
+        name: 'Without RIS'
+      };
+      Plotly.newPlot('plot_z', [trace1_z, trace2_z], {
+        title: 'Beampattern vs. z-coordinate',
+        xaxis: { title: 'z (m)' },
+        yaxis: { title: 'Power (dB)' }
+      });
+
+      // Plot: 2D Beampattern (x-y plane) with RIS
+      var data_xy_RIS = [{
+        z: patternRIS_xy.map(row => row.map(v => 10 * Math.log10(v))),
+        x: ysweep2,
+        y: xsweep2,
+        type: 'heatmap',
+        colorbar: { title: 'dB' }
+      }];
+      Plotly.newPlot('plot_xy_RIS', data_xy_RIS, {
+        title: '2D Beampattern with RIS (x-y plane)',
+        xaxis: { title: 'y (m)' },
+        yaxis: { title: 'x (m)' }
+      });
+
+      // Plot: 2D Beampattern (x-y plane) without RIS
+      var data_xy_Radar = [{
+        z: patternRadar_xy.map(row => row.map(v => 10 * Math.log10(v))),
+        x: ysweep2,
+        y: xsweep2,
+        type: 'heatmap',
+        colorbar: { title: 'dB' }
+      }];
+      Plotly.newPlot('plot_xy_Radar', data_xy_Radar, {
+        title: '2D Beampattern without RIS (x-y plane)',
+        xaxis: { title: 'y (m)' },
+        yaxis: { title: 'x (m)' }
+      });
+
+      // Plot: 2D Beampattern (y-z plane) with RIS
+      var data_yz_RIS = [{
+        z: patternRIS_yz.map(row => row.map(v => 10 * Math.log10(v))),
+        x: ysweep2_yz,
+        y: zsweep2,
+        type: 'heatmap',
+        colorbar: { title: 'dB' }
+      }];
+      Plotly.newPlot('plot_yz_RIS', data_yz_RIS, {
+        title: '2D Beampattern with RIS (y-z plane)',
+        xaxis: { title: 'y (m)' },
+        yaxis: { title: 'z (m)' }
+      });
+
+      // Plot: 2D Beampattern (y-z plane) without RIS
+      var data_yz_Radar = [{
+        z: patternRadar_yz.map(row => row.map(v => 10 * Math.log10(v))),
+        x: ysweep2_yz,
+        y: zsweep2,
+        type: 'heatmap',
+        colorbar: { title: 'dB' }
+      }];
+      Plotly.newPlot('plot_yz_Radar', data_yz_Radar, {
+        title: '2D Beampattern without RIS (y-z plane)',
+        xaxis: { title: 'y (m)' },
+        yaxis: { title: 'z (m)' }
+      });
+
+      // 3D Geometry Visualization
+      var traceTX = {
+        x: [radarTX[0]],
+        y: [radarTX[1]],
+        z: [radarTX[2]],
+        mode: 'markers',
+        marker: { size: 8, color: 'blue' },
+        name: 'Radar TX/RX'
+      };
+      var traceTarget = {
+        x: [target0[0]],
+        y: [target0[1]],
+        z: [target0[2]],
+        mode: 'markers',
+        marker: { size: 8, color: 'red' },
+        name: 'Target'
+      };
+      var traceRIS = {
+        x: risPositions.map(p => p[0]),
+        y: risPositions.map(p => p[1]),
+        z: risPositions.map(p => p[2]),
+        mode: 'markers',
+        marker: { size: 4, color: 'black' },
+        name: 'RIS Elements'
+      };
+      Plotly.newPlot('plot_3d', [traceTX, traceTarget, traceRIS], {
+        title: 'Radar, Target, and RIS Geometry',
+        scene: {
+          xaxis: { title: 'x (m)' },
+          yaxis: { title: 'y (m)' },
+          zaxis: { title: 'z (m)' }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
