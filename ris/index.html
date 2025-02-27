@@ -69,7 +69,7 @@
   <div class="container">
     <!-- Optional figure at the top (replace src with your image path) -->
     <div class="fig-container">
-      <img src="./pic.PNG" 
+      <img src="./pic.png" 
            alt="3D environment showing radar, RIS, seat, and target (baby)">
     </div>
 
@@ -190,10 +190,7 @@
       <div class="plot-title">2D Beampattern (y-z) without RIS</div>
       <div id="plotYZ_NoRIS" style="width:100%; height:400px;"></div>
     </div>
-    <div class="plot-container">
-      <div class="plot-title">3D Geometry (Radar, Target, RIS)</div>
-      <div id="plotGeometry3D" style="width:100%; height:500px;"></div>
-    </div>
+    <!-- RIS positions plots -->
     <div class="plot-container">
       <div class="plot-title">RIS Element Positions (x-y)</div>
       <div id="plotGeometryXY" style="width:100%; height:400px;"></div>
@@ -216,13 +213,10 @@
     /*******************************************************
      * Helper Functions
      *******************************************************/
-
-    // Parse a comma-separated string "x,y,z" into a numeric array [x, y, z].
     function parseVector(str) {
       return str.split(',').map(v => parseFloat(v.trim()));
     }
 
-    // Euclidean norm between two 3D points.
     function distance3D(a, b) {
       let dx = a[0] - b[0];
       let dy = a[1] - b[1];
@@ -230,13 +224,10 @@
       return Math.sqrt(dx*dx + dy*dy + dz*dz);
     }
 
-    // Convert linear power to amplitude (sqrt).
     function powerToAmplitude(p) {
       return Math.sqrt(Math.max(p, 0));
     }
 
-    // received_power_simplified (mirrors the MATLAB version).
-    //   Pt, Gt, Gr, Gris, sigma, lambda, R_tx_ris, R_ris_scatter, R_scatter_ris, R_ris_rx
     function receivedPowerSimplified(Pt, Gt, Gr, Gris, sigma, lambda,
                                      R_tx_ris, R_ris_scatter, R_scatter_ris, R_ris_rx) {
       return (Pt * Gt * Math.pow(Gris,4) * Gr * sigma * Math.pow(lambda,6)) /
@@ -244,28 +235,23 @@
               Math.pow(R_scatter_ris,2) * Math.pow(R_ris_rx,2));
     }
 
-    // received_power_radar (direct radar link without RIS).
-    //   Pt, Gt, Gr, sigma, lambda, R1, R2
     function receivedPowerRadar(Pt, Gt, Gr, sigma, lambda, R1, R2) {
       return (Pt * Gt * Gr * sigma * Math.pow(lambda,2)) /
              (Math.pow(4*Math.PI,3) * Math.pow(R1,2) * Math.pow(R2,2));
     }
 
-    // beampattern_RIS (mirrors the MATLAB version).
     function beampatternRIS(risPositions, risPhaseAmp, radarTX, targetPos, radarRX,
                             Pt, Gt, Gr, Gris, sigma, lambda, gainEffect) {
       let numRIS = risPositions.length;
-      let totalField = [0, 0]; // We'll store as complex in [real, imag].
+      let totalField = [0, 0];
 
       for (let i = 0; i < numRIS; i++) {
         for (let j = 0; j < numRIS; j++) {
-          // Distances
           let R_tx_ris   = distance3D(radarTX, risPositions[i]);
           let R_ris_scatter = distance3D(risPositions[i], targetPos);
           let R_scatter_ris = distance3D(targetPos, risPositions[j]);
           let R_ris_rx   = distance3D(risPositions[j], radarRX);
 
-          // Gain effect => compute amplitude from simplified power formula
           let amplitude = 1;
           if (gainEffect) {
             let Pr = receivedPowerSimplified(
@@ -275,31 +261,25 @@
             amplitude = powerToAmplitude(Pr);
           }
 
-          // Phase & amplitude from risPhaseAmp
           let phase_i_deg = risPhaseAmp[i][0];
           let amp_i       = risPhaseAmp[i][1];
           let phase_j_deg = risPhaseAmp[j][0];
           let amp_j       = risPhaseAmp[j][1];
 
-          // Convert the combined phase shift into an extra path length
           let pathExtra = (phase_i_deg + amp_i) / 360 * lambda;
           let pathLength = R_tx_ris + R_ris_scatter + R_scatter_ris + R_ris_rx + pathExtra;
 
-          // Multiply amplitude by the two RIS element amplitudes
           amplitude *= (amp_i * amp_j);
 
-          // Add to total field in complex form
           let phase = 2*Math.PI/lambda * pathLength;
           totalField[0] += amplitude * Math.cos(phase);
           totalField[1] += amplitude * Math.sin(phase);
         }
       }
-      // Return power = |totalField|^2
       let re = totalField[0], im = totalField[1];
       return re*re + im*im;
     }
 
-    // beampattern_radar_withoutRIS (direct link).
     function beampatternRadarNoRIS(radarTX, targetPos, radarRX,
                                    Pt, Gt, Gr, sigma, lambda, gainEffect) {
       let R1 = distance3D(radarTX, targetPos);
@@ -322,7 +302,6 @@
      * Main Simulation Logic
      *******************************************************/
     function runSimulation() {
-      // 1) Grab form inputs
       const freq       = parseFloat(document.getElementById('frequency').value);
       const radarTX    = parseVector(document.getElementById('radarTX').value);
       const radarRX    = parseVector(document.getElementById('radarRX').value);
@@ -337,32 +316,27 @@
       const sigma      = parseFloat(document.getElementById('sigma').value);
       const N          = parseFloat(document.getElementById('N').value);
 
-      // RIS segment 1
       const numRIS_x1   = parseFloat(document.getElementById('numRIS_x1').value);
       const numRIS_y1   = parseFloat(document.getElementById('numRIS_y1').value);
       const risCenterSeg1 = parseVector(document.getElementById('risCenterSeg1').value);
       const steerAz1    = parseFloat(document.getElementById('steerAz1').value);
       const steerEl1    = parseFloat(document.getElementById('steerEl1').value);
 
-      // RIS segment 2
       const numRIS_x2   = parseFloat(document.getElementById('numRIS_x2').value);
       const numRIS_y2   = parseFloat(document.getElementById('numRIS_y2').value);
       const risCenterSeg2 = parseVector(document.getElementById('risCenterSeg2').value);
       const steerAz2    = parseFloat(document.getElementById('steerAz2').value);
       const steerEl2    = parseFloat(document.getElementById('steerEl2').value);
 
-      // 2) Basic constants
-      const c = 3e8;  // Speed of light
+      const c = 3e8;
       const lambda = c / freq;
-      const gainEffect = true; // Matches your MATLAB "gainEffect = true"
+      const gainEffect = true;
 
-      // 3) Build the combined Segment_RIS_Params array (like in MATLAB)
       let Segment_RIS_Params = [
         [numRIS_x1, numRIS_y1, risCenterSeg1[0], risCenterSeg1[1], risCenterSeg1[2], steerAz1, steerEl1],
         [numRIS_x2, numRIS_y2, risCenterSeg2[0], risCenterSeg2[1], risCenterSeg2[2], steerAz2, steerEl2]
       ];
 
-      // 4) Construct RIS positions and phases
       let risPositions = [];
       let risPhaseAmp = [];
       let elementIndex = 0;
@@ -370,7 +344,6 @@
       for (let seg = 0; seg < Segment_RIS_Params.length; seg++) {
         let numX = Segment_RIS_Params[seg][0];
         let numY = Segment_RIS_Params[seg][1];
-        // Scale the segment center by half-wavelength
         let segCenter = [
           Segment_RIS_Params[seg][2] * (lambda/2),
           Segment_RIS_Params[seg][3] * (lambda/2),
@@ -380,7 +353,6 @@
         let el = Segment_RIS_Params[seg][6];
 
         let risSpacing = lambda / 2;
-        // Offsets
         let xOffsets = [];
         for (let ix = 0; ix < numX; ix++) xOffsets.push(ix * risSpacing);
         let yOffsets = [];
@@ -390,29 +362,24 @@
           for (let iy = 0; iy < numY; iy++) {
             let xPos = segCenter[0] + xOffsets[ix];
             let yPos = segCenter[1] + yOffsets[iy];
-            let zPos = segCenter[2]; // no z offset
+            let zPos = segCenter[2];
 
             risPositions.push([xPos, yPos, zPos]);
 
-            // Compute phase shift for the element
-            // phi0 = pi * ((ix-1)*sind(az) + (iy-1)*cosd(az)*sind(el))
-            // For simplicity in JS, let's replicate the logic:
-            let ixShift = ix; // (ix-1) in MATLAB, but can keep consistent offset if you prefer
+            let ixShift = ix;
             let iyShift = iy;
             let phi0 = Math.PI * (
-              (ixShift - 0) * Math.sin(az * Math.PI/180) +
-              (iyShift - 0) * Math.cos(az * Math.PI/180) * Math.sin(el * Math.PI/180)
+              (ixShift) * Math.sin(az * Math.PI/180) +
+              (iyShift) * Math.cos(az * Math.PI/180) * Math.sin(el * Math.PI/180)
             );
             let phiDeg = phi0 * 180 / Math.PI;
 
-            // amplitude = 1
             risPhaseAmp.push([phiDeg, 1]);
             elementIndex++;
           }
         }
       }
 
-      // Adjust RIS positions so mean is at the desired "risCenter"
       let meanX = risPositions.reduce((acc, p) => acc + p[0], 0) / risPositions.length;
       let meanY = risPositions.reduce((acc, p) => acc + p[1], 0) / risPositions.length;
       let meanZ = risPositions.reduce((acc, p) => acc + p[2], 0) / risPositions.length;
@@ -425,7 +392,6 @@
       /*******************************************************
        * 1D Sweeps
        *******************************************************/
-      // x-sweep: from 0.1 to 2
       let xsweep = [];
       for (let i = 0; i < N; i++) {
         let val = 0.1 + (2 - 0.1)*(i/(N-1));
@@ -447,7 +413,6 @@
       let patternRIS_x_dB = patternRIS_x.map(v => 10*Math.log10(v));
       let patternRadar_x_dB = patternRadar_x.map(v => 10*Math.log10(v));
 
-      // y-sweep: from -1 to 1
       let ysweep = [];
       for (let i = 0; i < N; i++) {
         ysweep.push(-1 + 2*(i/(N-1)));
@@ -468,7 +433,6 @@
       let patternRIS_y_dB = patternRIS_y.map(v => 10*Math.log10(v));
       let patternRadar_y_dB = patternRadar_y.map(v => 10*Math.log10(v));
 
-      // z-sweep: from -1 to 1
       let zsweep = [];
       for (let i = 0; i < N; i++) {
         zsweep.push(-1 + 2*(i/(N-1)));
@@ -492,7 +456,6 @@
       /*******************************************************
        * 2D Beampattern (x-y plane)
        *******************************************************/
-      // x in [0.1..2], y in [-1..1], Nx x Ny
       let xVals = [];
       for (let i = 0; i < Nx; i++) {
         let val = 0.1 + (2-0.1)*(i/(Nx-1));
@@ -523,14 +486,11 @@
       /*******************************************************
        * 2D Beampattern (y-z plane)
        *******************************************************/
-      // y in [-1..1], z in [-1..2] (like your MATLAB code Nx=..., range -1..2)
-      // We'll reuse Nx for z steps, Ny for y steps
       let zVals2 = [];
       for (let i = 0; i < Nx; i++) {
-        let val = -1 + (2+1)*(i/(Nx-1)); // from -1 to 2 => range=3
+        let val = -1 + (3)*(i/(Nx-1));
         zVals2.push(val);
       }
-      // We'll just reuse yVals from above if we want [-1..1], but let's re-make it:
       let yVals2 = [];
       for (let j = 0; j < Ny; j++) {
         let val = -1 + 2*(j/(Ny-1));
@@ -556,8 +516,6 @@
       /*******************************************************
        * Plotting with Plotly
        *******************************************************/
-
-      // 1D Sweeps: X
       Plotly.newPlot('plotX', [
         { x: xsweep, y: patternRIS_x_dB, mode: 'lines', name: 'With RIS' },
         { x: xsweep, y: patternRadar_x_dB, mode: 'lines', name: 'Without RIS' }
@@ -567,7 +525,6 @@
         yaxis: { title: 'Power (dB)' }
       });
 
-      // 1D Sweeps: Y
       Plotly.newPlot('plotY', [
         { x: ysweep, y: patternRIS_y_dB, mode: 'lines', name: 'With RIS' },
         { x: ysweep, y: patternRadar_y_dB, mode: 'lines', name: 'Without RIS' }
@@ -577,7 +534,6 @@
         yaxis: { title: 'Power (dB)' }
       });
 
-      // 1D Sweeps: Z
       Plotly.newPlot('plotZ', [
         { x: zsweep, y: patternRIS_z_dB, mode: 'lines', name: 'With RIS' },
         { x: zsweep, y: patternRadar_z_dB, mode: 'lines', name: 'Without RIS' }
@@ -587,11 +543,10 @@
         yaxis: { title: 'Power (dB)' }
       });
 
-      // 2D: (x-y) with RIS
       Plotly.newPlot('plotXY_RIS', [{
         z: patternRIS_xy,
-        x: yVals,   // as per your MATLAB code, x-axis is "y-index"?
-        y: xVals,   // and y-axis is "x-index"? 
+        x: yVals,
+        y: xVals,
         type: 'heatmap',
         colorscale: 'Jet'
       }], {
@@ -600,7 +555,6 @@
         yaxis: { title: 'x-index (m)' }
       });
 
-      // 2D: (x-y) without RIS
       Plotly.newPlot('plotXY_NoRIS', [{
         z: patternRadar_xy,
         x: yVals,
@@ -613,7 +567,6 @@
         yaxis: { title: 'x-index (m)' }
       });
 
-      // 2D: (y-z) with RIS
       Plotly.newPlot('plotYZ_RIS', [{
         z: patternRIS_yz,
         x: yVals2,
@@ -626,7 +579,6 @@
         yaxis: { title: 'z-index (m)' }
       });
 
-      // 2D: (y-z) without RIS
       Plotly.newPlot('plotYZ_NoRIS', [{
         z: patternRadar_yz,
         x: yVals2,
@@ -640,66 +592,14 @@
       });
 
       /*******************************************************
-       * Geometry Visualization
+       * Geometry Visualization: Only RIS Positions
        *******************************************************/
-      // 3D scatter: Radar, Target, RIS
-      let radarTrace = {
-        x: [radarTX[0]],
-        y: [radarTX[1]],
-        z: [radarTX[2]],
-        mode: 'markers',
-        marker: { color: 'blue', size: 6, symbol: 'square' },
-        name: 'Radar TX/RX'
-      };
-      let targetTrace = {
-        x: [target0[0]],
-        y: [target0[1]],
-        z: [target0[2]],
-        mode: 'markers',
-        marker: { color: 'red', size: 6, symbol: 'circle' },
-        name: 'Target'
-      };
       let risX = risPositions.map(p => p[0]);
       let risY = risPositions.map(p => p[1]);
       let risZ = risPositions.map(p => p[2]);
-      let risTrace = {
-        x: risX,
-        y: risY,
-        z: risZ,
-        mode: 'markers',
-        marker: { color: 'black', size: 3 },
-        name: 'RIS Elements'
-      };
 
-      Plotly.newPlot('plotGeometry3D', [radarTrace, targetTrace, risTrace], {
-        title: 'Radar, Target, and RIS Geometry (3D)',
-        scene: {
-          xaxis: { title: 'x (m)' },
-          yaxis: { title: 'y (m)' },
-          zaxis: { title: 'z (m)' }
-        }
-      });
-
-      // 2D geometry: x-y
-      let risXY = {
-        x: risX,
-        y: risY,
-        mode: 'markers',
-        marker: { color: 'black', size: 3 },
-        name: 'RIS Elements'
-      };
       Plotly.newPlot('plotGeometryXY', [
-        {
-          x: [radarTX[0]], y: [radarTX[1]],
-          mode: 'markers', marker: { color: 'blue', size: 8, symbol: 'square' },
-          name: 'Radar TX/RX'
-        },
-        {
-          x: [target0[0]], y: [target0[1]],
-          mode: 'markers', marker: { color: 'red', size: 8, symbol: 'circle' },
-          name: 'Target'
-        },
-        risXY
+        { x: risX, y: risY, mode: 'markers', marker: { color: 'black', size: 3 }, name: 'RIS Elements' }
       ], {
         title: 'RIS Element Positions (x-y)',
         xaxis: { title: 'x (m)' },
@@ -707,26 +607,8 @@
         width: 600, height: 400
       });
 
-      // 2D geometry: x-z
-      let risXZ = {
-        x: risX,
-        y: risZ,
-        mode: 'markers',
-        marker: { color: 'black', size: 3 },
-        name: 'RIS Elements'
-      };
       Plotly.newPlot('plotGeometryXZ', [
-        {
-          x: [radarTX[0]], y: [radarTX[2]],
-          mode: 'markers', marker: { color: 'blue', size: 8, symbol: 'square' },
-          name: 'Radar TX/RX'
-        },
-        {
-          x: [target0[0]], y: [target0[2]],
-          mode: 'markers', marker: { color: 'red', size: 8, symbol: 'circle' },
-          name: 'Target'
-        },
-        risXZ
+        { x: risX, y: risZ, mode: 'markers', marker: { color: 'black', size: 3 }, name: 'RIS Elements' }
       ], {
         title: 'RIS Element Positions (x-z)',
         xaxis: { title: 'x (m)' },
@@ -734,26 +616,8 @@
         width: 600, height: 400
       });
 
-      // 2D geometry: y-z
-      let risYZ = {
-        x: risY,
-        y: risZ,
-        mode: 'markers',
-        marker: { color: 'black', size: 3 },
-        name: 'RIS Elements'
-      };
       Plotly.newPlot('plotGeometryYZ', [
-        {
-          x: [radarTX[1]], y: [radarTX[2]],
-          mode: 'markers', marker: { color: 'blue', size: 8, symbol: 'square' },
-          name: 'Radar TX/RX'
-        },
-        {
-          x: [target0[1]], y: [target0[2]],
-          mode: 'markers', marker: { color: 'red', size: 8, symbol: 'circle' },
-          name: 'Target'
-        },
-        risYZ
+        { x: risY, y: risZ, mode: 'markers', marker: { color: 'black', size: 3 }, name: 'RIS Elements' }
       ], {
         title: 'RIS Element Positions (y-z)',
         xaxis: { title: 'y (m)' },
