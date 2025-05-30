@@ -169,6 +169,128 @@ Radar Equation: amp = 2.2295761512298927e-07
 SensingSP Ray Tracing output: amp = 2.2292628849539048e-07
         </pre>
 
+        <h2>Example 2: Radar Raw Data Cube Generation - Research Mode</h2>
+
+        <pre><code class="language-python">
+import sensingsp as ssp
+
+ssp.utils.initialize_environment()
+radar = ssp.radar.utils.addRadar(radarSensor=ssp.radar.utils.RadarSensorsCategory.TI_AWR1642)
+# Add targets to the radar scenario
+target_1 = ssp.radar.utils.addTarget(
+    refRadar=radar,
+    range=5, azimuth=10,
+    RCS0=3, radial_velocity=0 )
+
+target_2 = ssp.radar.utils.addTarget(
+    refRadar=radar,
+    range=20, azimuth=0,
+    RCS0=2, radial_velocity=0 )
+
+ssp.visualization.visualize_scenario()
+
+ssp.utils.initialize_simulation()
+ssp.utils.set_configurations([ssp.radar.utils.RadarSignalGenerationConfigurations.Spillover_Disabled,
+                              ssp.radar.utils.RadarSignalGenerationConfigurations.RayTracing_Balanced,
+                              ssp.radar.utils.RadarSignalGenerationConfigurations.CUDA_Disabled])
+
+dataCube, radarParameters = ssp.utils.research.simplest.RadarRawData()
+# Print the shape of the data cube
+
+print(dataCube.shape, dataCube.dtype)
+
+        </code></pre>
+        
+        <pre class="output">
+(256, 256, 4) complex128
+        </pre>
+        <h2>Example 3: Range Doppler - simple FFT</h2>
+
+        <pre><code class="language-python">
+import sensingsp as ssp
+import numpy as np
+from mathutils import Vector
+
+print(ssp.__version__)
+
+
+"""Initialize the simulation environment"""
+
+ssp.utils.initialize_environment()
+
+"""Set up the radar sensor, add dynamic objects, and configure the camera."""
+
+# Add radar sensor at the specified location.
+radar = ssp.radar.utils.addRadar(
+    radarSensor=ssp.radar.utils.RadarSensorsCategory.TI_IWR6843,
+    location_xyz=(0, 0, 1)
+)
+
+# Fetch and add objects (Walking Man) to the environment.
+walkingman_file = ssp.utils.hub.fetch_file("animation", "WalkingMan")
+ssp.environment.add_blenderfileobjects(
+    walkingman_file,
+    RCS0=1,
+    translation=(4.5, 0.7, 0),
+    rotation=(0, 0, np.pi)
+)
+ssp.environment.add_blenderfileobjects(
+    walkingman_file,
+    RCS0=1,
+    translation=(4.5, 0, 0),
+    rotation=(0, 0, 0)
+)
+
+"""Initialize simulation parameters and radar configurations."""
+
+endframe = 30
+
+ssp.utils.initialize_simulation(endframe=endframe)
+
+configurations = [
+    ssp.radar.utils.RadarSignalGenerationConfigurations.Spillover_Disabled,
+    ssp.radar.utils.RadarSignalGenerationConfigurations.RayTracing_Balanced,
+    ssp.radar.utils.RadarSignalGenerationConfigurations.CUDA_Enabled
+]
+ssp.utils.set_configurations(configurations)
+
+"""Run the main simulation loop and create a grid video after processing all frames."""
+while ssp.config.run():
+    path_d_drate_amp = ssp.raytracing.Path_RayTracing_frame()
+    Signals = ssp.integratedSensorSuite.SensorsSignalGeneration_frame(path_d_drate_amp)
+
+    # Loop over each radar sensor configuration.
+    for isuite, radarSpecifications in enumerate(ssp.RadarSpecifications):
+        for iradar, specifications in enumerate(radarSpecifications):
+            for XRadar, timeX in Signals[isuite]['radars'][iradar]:
+                # Debug: print the count of radar signals.
+                print("Processing radar signal, count:", len(Signals[isuite]['radars'][iradar]))
+
+                # Apply a Hamming window to the fast-time dimension.
+                fast_time_window = ssp.radar.utils.hamming(XRadar.shape[0])
+                X_windowed_fast = XRadar * fast_time_window[:, np.newaxis, np.newaxis]
+
+                # Compute the Range FFT.
+                NFFT_Range = int(2 ** (np.ceil(np.log2(XRadar.shape[0])) + 1))
+                d_fft = (np.arange(NFFT_Range) * ssp.LightSpeed / 2 /
+                         specifications['FMCW_ChirpSlobe'] / NFFT_Range / specifications['Ts'])
+                X_fft_fast = np.fft.fft(X_windowed_fast, axis=0, n=NFFT_Range) / XRadar.shape[0]
+
+                # Extract the first transmitter's pulses for Doppler processing.
+                rangePulseTX0RX0 = X_fft_fast[:, 0::specifications['M_TX'], 0]
+                NFFT_Doppler = int(2 ** (np.ceil(np.log2(rangePulseTX0RX0.shape[1])) + 2))
+                rangeDopplerTXRX = np.fft.fft(rangePulseTX0RX0, axis=1, n=NFFT_Doppler) / rangePulseTX0RX0.shape[1]
+                rangeDopplerTXRX = np.fft.fftshift(rangeDopplerTXRX, axes=1)
+                f_Doppler = np.linspace(
+                    -0.5 / (specifications['PRI'] * specifications['M_TX']),
+                    0.5 / (specifications['PRI'] * specifications['M_TX']),
+                    NFFT_Doppler
+                )
+
+    print(f'Processed frame = {ssp.config.CurrentFrame}')
+    ssp.utils.increaseCurrentFrame()
+        </code></pre>
+        
         <h2>Contact</h2>
         <p>For inquiries, suggestions, or contributions, feel free to reach out:</p>
         <p><strong>Moein Ahmadi</strong></p>
