@@ -81,6 +81,34 @@
             font-size: 0.9rem;
             color: #777;
         }
+        .file-structure {
+        border: 1px solid #4CAF50;
+        border-radius: 8px;
+        background: #f0fff0;
+        padding: 1rem 1.5rem;
+        margin: 2rem auto;
+        max-width: 90%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .file-structure h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: #4CAF50;
+        border-bottom: 2px solid #e0f2e0;
+        padding-bottom: 0.25rem;
+        }
+
+        .file-structure pre {
+        background: #ffffff;
+        border-left: 4px solid #4CAF50;
+        padding: 1rem;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 0.9rem;
+        overflow-x: auto;
+        white-space: pre;
+        margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -294,7 +322,1161 @@ while ssp.config.run():
         src="https://www.youtube.com/embed/usQvElWxzm0" 
         allowfullscreen>
 </iframe>
+<!-- <h2>Python File Structure</h2>
 
+        <!-- <pre><code class="language-python"> -->
+            <!-- <pre class="output"> --> -->
+<section class="file-structure container">
+  <h2>Python File Structure</h2>
+  <pre>
+"sensingsp/raytracing/RayTracingFunctions.py": {
+  "functions": [
+    "cart2sph",
+    "azel_fromRotMatrix_dir",
+    "dir_from_azel_matrix",
+    "azel_fromRotMatrix_dir_test",
+    "calculate_reflected_direction",
+    "calculate_refracted_direction"
+  ],
+  "classes": {
+    "SourceType": [
+      "__init__",
+      "__repr__"
+    ],
+    "RaySet": [
+      "__init__",
+      "root",
+      "__repr__"
+    ],
+    "Path4WavePropagation": [
+      "__init__",
+      "add_middle_element",
+      "__repr__"
+    ],
+    "RayTracingFunctions": [
+      "check_line_of_sight",
+      "check_line_of_sight_checkID",
+      "check_line_of_sight_ID",
+      "LOS_RX_Target_RIS",
+      "LOS_RX_Target_RIS_4ris",
+      "LOS_RX_RIS_4scatter",
+      "random_normalized_vectors_around_direction",
+      "rayset_gen_TX",
+      "rayset_gen_RIS",
+      "rayset_gen_Scatter",
+      "RXPath"
+    ]
+  }
+},
+"sensingsp/raytracing/BlenderGeometry.py": {
+  "functions": [
+    "cart2sph",
+    "azel_fromRotMatrix_dir"
+  ],
+  "classes": {
+    "BlenderGeometry": [
+      "get_Target_Position",
+      "get_Suite_Position",
+      "get_Position_Velocity"
+    ]
+  }
+},
+"sensingsp/radar/utils/radarutils.py": {
+  "functions": [
+    "CUDA_cfar_ca_2D_alpha",
+    "cfar_ca_2D_alpha_cuda",
+    "cfar_ca_2D_alpha",
+    "cfar_ca_2D",
+    "cfar_simple_2D",
+    "cfar_simple_max",
+    "calculate_n_from_beamwidth",
+    "antenna_gain_from_beamwidth",
+    "predefined_array_configs_TI_Cascade_AWR2243",
+    "make_Radar_DAR",
+    "predefined_array_configs_M_MIMO",
+    "predefined_array_configs_imagingURARX",
+    "predefined_array_configs_LinearArray",
+    "predefined_array_configs_DARWu_AllRX",
+    "predefined_array_configs_DARWu_AllTX",
+    "predefined_array_configs_DARWu",
+    "virtualArray_info",
+    "predefined_array_configs_3TX1RX",
+    "predefined_array_configs_TI_IWR6843",
+    "predefined_array_configs_TI_AWR1642",
+    "predefined_array_configs_URA",
+    "predefined_array_configs_3by1",
+    "predefined_array_configs_TI_IWR6843_az",
+    "predefined_array_configs_JSON",
+    "predefined_array_configs_SISO",
+    "predefined_array_configs_txrx",
+    "predefined_array_configs_ALTOS_V1",
+    "predefined_array_configs_infineon_BGT60UTR11AIP",
+    "predefined_array_configs_infineon_BGT60TR13C",
+    "predefined_array_configs_infineon_BGT24LTR11_CW",
+    "setDefaults",
+    "set_radar_displayrangeLim",
+    "rangeResolution_and_maxUnambigiousRange",
+    "FMCW_Chirp_Parameters",
+    "set_FMCW_Chirp_Parameters",
+    "compute_spectrogram",
+    "plot_spectrogram",
+    "plot_signal",
+    "compute_spectrum",
+    "plot_spectrum",
+    "rangeprocessing",
+    "clutter_removal",
+    "dopplerprocessing_mimodemodulation",
+    "rangedoppler_detection",
+    "rangedoppler_detection_alpha",
+    "xyz_angleprocessing",
+    "angleprocessing_CoArray",
+    "angleprocessing",
+    "pointscloud",
+    "angleprocessing_capon1D",
+    "steeringvector",
+    "addTarget",
+    "printAntennaInfp",
+    "addRadar",
+    "addRadarFile"
+  ],
+  "classes": {
+    "RadarSensorsCategory": [],
+    "RadarSignalGenerationConfigurations": [],
+    "MIMORadarTechnique": [],
+    "RadarSpecJSON": [
+      "__init__",
+      "save_to_json",
+      "load_from_json"
+    ]
+  }
+},
+"sensingsp/radar/waveforms/radarwaveforms.py": {
+  "functions": [
+    "barker_code",
+    "frank_code",
+    "golomb_sequence",
+    "generate_pulse_train",
+    "generate_fmcw_signal",
+    "gaussian_waveform",
+    "p1_code",
+    "p2_code",
+    "p3_code",
+    "p4_code",
+    "zadoff_chu_code"
+  ],
+  "classes": {}
+},
+"sensingsp/radar/utils/rss.py": {
+  "functions": [
+    "CFAR_Window_Selection_F",
+    "find_indices_within_distance",
+    "apply_adc",
+    "apply_adc_real"
+  ],
+  "classes": {}
+},
+"sensingsp/radar/utils/mimo.py": {
+  "functions": [
+    "matlab_like_hadamard",
+    "steeringVector_position",
+    "update_block_diag_matrix",
+    "Distributed_MIMO_steeringMatrix_position",
+    "generate_covariance_matrix",
+    "generate_covariance_matrix_Distributed",
+    "generate_complex_gaussian_samples",
+    "pfaTHR_tH0",
+    "ROC_tH1H0",
+    "ROC_tH1",
+    "array_detector_ABC",
+    "array_detector_ABC_inv",
+    "array_detector_Hermitian",
+    "array_detector_MF",
+    "MF_pfa",
+    "MF_threshold",
+    "MF_pd",
+    "array_detector_EstimatedAmplitude",
+    "array_detector_ED",
+    "ED_pfa",
+    "array_detector_ACE",
+    "array_detector_Kelly",
+    "Kelly_pfa",
+    "Kelly_threshold",
+    "Kelly_DistributedIndependentSameRadars_pfa",
+    "array_detector_Rao",
+    "array_detector_MMED",
+    "array_detector_MED",
+    "array_detector_RankOne_SingleShot",
+    "array_detector_SCM_N",
+    "array_detector_cos2",
+    "array_detector_SINR",
+    "array_detector_AMFDeemphasis",
+    "array_detector_Kalson",
+    "array_detector_SD",
+    "array_detector_ABORT",
+    "array_detector_WABORT",
+    "array_detector_CAD",
+    "array_detector_CARD",
+    "array_detector_2SROB",
+    "array_detector_1SROB",
+    "array_detector_ROB",
+    "hamming",
+    "array_detector_ROC_MonteCarlo_sortxH0",
+    "array_detector_ROC_AMF_ACE_MonteCarlo",
+    "array_detector_ROC_Kelly_MonteCarlo",
+    "array_detector_findTHR_AMF_ACE",
+    "array_detector_PdSNR_AMF_ACE_Kelly_MonteCarlo",
+    "array_detector_PdNSecondary_AMF_ACE_Kelly_MonteCarlo",
+    "VAsignal2coArraySignal_1D_RangeDopplerVA",
+    "VAsignal2coArraySignal_1D",
+    "VAsignal2coArraySignal_1D_sum",
+    "VAsignal2coArraySignal_2D",
+    "MIMO_minimum_redundancy_array",
+    "minimum_redundancy_array",
+    "mimo_antenna_order"
+  ],
+  "classes": {
+    "MIMO_Functions": [
+      "sv",
+      "plot_Angle_Doppler",
+      "AD_matrix"
+    ]
+  }
+},
+
+"sensingsp/visualization/visualization.py": {
+  "functions": [
+    "plot_tiangles",
+    "visualize_array",
+    "visualize_scenario",
+    "visualizeProcessingOutputs",
+    "visualize_radar_path_d_drate_amp",
+    "plot_continuous_curve",
+    "plot_pattern",
+    "plot_pattern_button"
+  ],
+  "classes": {}
+},
+"sensingsp/visualization/videoGrid.py": {
+  "functions": [
+    "get_video_resolution",
+    "create_grid_video",
+    "combine_videos",
+    "addframe_GridVideoWriters",
+    "firsttime_init_GridVideoWriters",
+    "captureFig"
+  ],
+  "classes": {}
+},
+"sensingsp/visualization/tex.py": {
+  "functions": [
+    "target_position",
+    "tx_position",
+    "rx_position",
+    "tx_rx_phase",
+    "wavenumber",
+    "wavenumber2",
+    "tx_target_distance",
+    "rx_target_distance",
+    "target_range",
+    "target_unit_vector",
+    "target_unit_vector_angles",
+    "tx_ura",
+    "rx_ura",
+    "my_limit",
+    "ny_limit",
+    "mz_limit",
+    "nz_limit",
+    "raw_data_cube",
+    "signal_steering_matrix",
+    "cq",
+    "transmit_steering_vector",
+    "receive_steering_vector",
+    "Doppler_steering_vector",
+    "doppler",
+    "doppler_processing_x",
+    "detector_MF",
+    "detector_AMF",
+    "detector_NAMF",
+    "detector_Kelly",
+    "detector_Kelly_vec",
+    "detector_Kelly_siso",
+    "detector_Kelly_siso_simple",
+    "hypothesis_text",
+    "hypothesisH1_text",
+    "hypothesisH0_text",
+    "glrt_ratio_text",
+    "pdfH1",
+    "pdfH0",
+    "Sigma",
+    "yofx",
+    "sigma",
+    "Omega",
+    "ml_estimates_text",
+    "determinant_relation_text",
+    "simplified_detector_text",
+    "final_detector_text",
+    "xd_distribution_text",
+    "glrtks_text"
+  ],
+  "classes": {}
+},
+"sensingsp/ris/utils.py": {
+  "functions": [
+    "add_ris",
+    "add_ris_mat"
+  ],
+  "classes": {}
+},
+"sensingsp/ai/extras/ConwaysGameofLife.py": {
+  "functions": [
+    "read_cells",
+    "game_of_life_kernel",
+    "generate_frame_kernel",
+    "save_game_of_life_video_cuda",
+    "save_game_of_life_video_cpu",
+    "runapp"
+  ],
+  "classes": {
+    "GameofLifeApp": [
+      "__init__",
+      "initUI",
+      "save_video",
+      "initialize_grid",
+      "load_pattern"
+    ]
+  }
+},
+"sensingsp/ai/radarML/DDPM/diffusion.py": {
+  "functions": [
+    "get_time_embedding",
+    "sample",
+    "infer",
+    "train"
+  ],
+  "classes": {
+    "DownBlock": [
+      "__init__",
+      "forward"
+    ],
+    "MidBlock": [
+      "__init__",
+      "forward"
+    ],
+    "UpBlock": [
+      "__init__",
+      "forward"
+    ],
+    "Unet": [
+      "__init__",
+      "forward"
+    ],
+    "LinearNoiseScheduler": [
+      "__init__",
+      "add_noise",
+      "sample_prev_timestep"
+    ],
+    "MnistDataset": [
+      "__init__",
+      "load_images",
+      "__len__",
+      "__getitem__"
+    ]
+  }
+},
+"sensingsp/ai/radarML/HandGestureMisoCNN.py": {
+  "functions": [
+    "initialize_weights_scaled_kaiming",
+    "initialize_weights_xavier",
+    "initialize_weights_lecun",
+    "normalize_along_rows",
+    "make_sample",
+    "load_sample",
+    "runradarmisoCNNapp"
+  ],
+  "classes": {
+    "RadarGestureDataset": [
+      "__init__",
+      "normalize_along_rows",
+      "__len__",
+      "__getitem__"
+    ],
+    "RadarBranch": [
+      "__init__",
+      "forward"
+    ],
+    "MultiInputModel": [
+      "__init__",
+      "forward"
+    ],
+    "RadarMisoCNNApp": [
+      "__init__",
+      "initUI",
+      "initNet",
+      "initdataset",
+      "browse_folder",
+      "testinput_model",
+      "browse_testfile",
+      "loaddataset",
+      "def_model",
+      "train_model",
+      "test_model",
+      "visualize_model",
+      "loadfromhub",
+      "visualize_samples",
+      "visualize_model_as_image",
+      "visualize_parameter_updates"
+    ]
+  }
+},
+"sensingsp/ai/radarML/HumanHealthMonitoringConvAE_BiLSTM.py": {
+  "functions": [
+    "normalize_ecg",
+    "extract_file_info",
+    "load_sample",
+    "printnninfo",
+    "printnnshape",
+    "runradarConvAEBiLSTMapp"
+  ],
+  "classes": {
+    "RadarECGDataset": [
+      "__init__",
+      "__len__",
+      "__getitem__"
+    ],
+    "Layer1_HumanHM": [
+      "__init__",
+      "forward"
+    ],
+    "MODWTLayer_fix": [
+      "__init__",
+      "forward",
+      "_apply_convolution"
+    ],
+    "MODWTLayer": [
+      "__init__",
+      "forward",
+      "_apply_convolution"
+    ],
+    "Layer2_HumanHM": [
+      "__init__",
+      "forward"
+    ],
+    "RadarHumanHMApp": [
+      "__init__",
+      "initUI",
+      "initNet",
+      "initdataset",
+      "browse_folder",
+      "testinput_model",
+      "browse_testfile",
+      "loaddataset",
+      "def_model",
+      "train_model",
+      "test_model",
+      "visualize_model",
+      "visualize_samples",
+      "testpretrained_but",
+      "modwt_but",
+      "visualize_model_as_image",
+      "visualize_parameter_updates"
+    ]
+  }
+},
+"sensingsp/ai/radarML/SHARPWifiSensing.py": {
+  "functions": [
+    "runradarSHARPWifiSensingapp"
+  ],
+  "classes": {
+    "SHARPPipelineApp": [
+      "__init__",
+      "initUI",
+      "browse_dataset_folder",
+      "browse_code_folder",
+      "get_files_in_subdir",
+      "visualize_selected_file",
+      "run_phase_sanitization",
+      "run_doppler_computation",
+      "run_create_datasets",
+      "run_train_model"
+    ]
+  }
+},
+"sensingsp/ai/radarML/GANWaveforms.py": {
+  "functions": [
+    "runradarWaveformapp",
+    "create_dataset"
+  ],
+  "classes": {
+    "RadarWaveformDataset": [
+      "__init__",
+      "__len__",
+      "__getitem__"
+    ],
+    "LayersGenerator": [
+      "__init__",
+      "forward"
+    ],
+    "LayersDiscriminator": [
+      "__init__",
+      "forward"
+    ],
+    "GAN": [
+      "__init__",
+      "train_discriminator",
+      "train_generator",
+      "generate_fake_data"
+    ],
+    "RadarWaveformApp": [
+      "__init__",
+      "initUI",
+      "initNet",
+      "initdataset",
+      "browse_folder",
+      "testinput_model",
+      "browse_testfile",
+      "loaddataset",
+      "def_model",
+      "train_model",
+      "test_model",
+      "visualize_model",
+      "visualize_samples",
+      "visualize_model_as_image",
+      "visualize_parameter_updates"
+    ]
+  }
+},
+"sensingsp/radar/utils/datasets/CarryObject.py": {
+  "functions": [
+    "run"
+  ],
+  "classes": {}
+},
+"sensingsp/radar/utils/apps.py": {
+  "functions": [
+    "process_events",
+    "guess_memory_usage",
+    "pyqtgraph3DApp",
+    "FMCW_Chirp_Parameters",
+    "patch_pattern",
+    "appselect",
+    "runfmcwchirpapp",
+    "runRISAnalysisapp",
+    "runradarArrayapp",
+    "runRadarVis",
+    "runrAntennaElementPatternapp",
+    "runHubLoad",
+    "runradarconfigapp",
+    "runradarPatchAntennaPatternapp"
+  ],
+  "classes": {
+    "AntennaElementPattern": [
+      "__init__",
+      "initUI",
+      "on_run"
+    ],
+    "RadarVisApp": [
+      "__init__",
+      "initUI",
+      "on_run",
+      "style_axes",
+      "pointcloud_axe",
+      "vs_processing",
+      "temp",
+      "on_next",
+      "on_next_old2",
+      "on_next_old"
+    ],
+    "HubLoadApp": [
+      "__init__",
+      "initUI",
+      "simplescenario",
+      "chestOsc",
+      "init_hub",
+      "load_selected"
+    ],
+    "RadarArrayApp": [
+      "__init__",
+      "initUI",
+      "on_radarsensor_changed",
+      "updatesuiteradarspec",
+      "runnextframe",
+      "initsimulation",
+      "vissimulation",
+      "_build_runsim_tab",
+      "visualize_pattern",
+      "_build_transmit_receive_tab",
+      "_on_radar_mode_change",
+      "_build_signal_tab",
+      "_build_noise_adc_tab",
+      "_build_angleProcessing_tab",
+      "_build_radar_config_tab",
+      "_build_simulations_tab",
+      "_build_run_tab",
+      "delall_button_fcn",
+      "set_button_fcn",
+      "processingUI_button_fcn",
+      "addTarget_button_fcn",
+      "n_pulse_mimo_btn_fcn",
+      "read_settings",
+      "read_settings0",
+      "write_settings",
+      "write_settings0",
+      "fmcwinfo_fcn",
+      "readradarspec",
+      "writeradarspec",
+      "run_add",
+      "browse_file",
+      "loadfile",
+      "on_config_changed",
+      "apply_vaAuto",
+      "on_mimo_changed",
+      "apply_settings",
+      "download_from_hub",
+      "visualize_virtual",
+      "load_data",
+      "save_data",
+      "run_analysis"
+    ],
+    "RISAnalysisApp": [
+      "__init__",
+      "initUI",
+      "generate_ris_data",
+      "generate_ris_data2",
+      "generate_ris_data3",
+      "run_blenderpath_button",
+      "run_blender_button",
+      "run_blender_button2",
+      "run_analysis",
+      "run_analysis2",
+      "set_axes_equal"
+    ],
+    "FMCWApp": [
+      "__init__",
+      "initUI",
+      "calculate_parameters",
+      "clear_inputs"
+    ],
+    "RadarConfigApp": [
+      "__init__",
+      "add_parameter_widgets",
+      "create_labeled_widget",
+      "save_to_json",
+      "load_from_json",
+      "update_parameters_from_ui",
+      "update_ui_from_parameters"
+    ],
+    "PatchAntennaPatternApp": [
+      "__init__",
+      "_init_ui",
+      "def1",
+      "def2",
+      "def3",
+      "add_row",
+      "remove_selected_rows",
+      "draw_segments"
+    ]
+  }
+},
+"sensingsp/environment/scenarios.py": {
+  "functions": [
+    "make_simple_scenario",
+    "run_simple_chain",
+    "add_scenario",
+    "sim_scenario",
+    "predefine_wifi_sensing",
+    "processing_pulse_radar",
+    "predefine_pulse_radar",
+    "ris_analysis_app_scenario",
+    "ris_analysis_app_scenario2",
+    "predefine_movingcube_6843",
+    "predefine_TruckHuman_SameRG",
+    "predefine_TruckHuman_DiffRG",
+    "processing_1",
+    "processing_4",
+    "processing_3",
+    "processing_2",
+    "radar_path_d_drate_amp",
+    "rcxchain",
+    "wifi_sensing",
+    "raytracing_test",
+    "processing_HandGesture1642",
+    "update_pointclouds",
+    "predefine_Altos_Radar",
+    "predefine_Altos_Radar_file",
+    "predefine_Hand_Gesture_3Xethru_Nature_paper",
+    "setRCSToMaterial",
+    "add_blenderfileobjects",
+    "predefine_Hand_Gesture_1642",
+    "predefine_Pattern_SISO",
+    "process_predefine_Hand_Gesture_3Xethru_Nature_paper",
+    "deform_scenario_1",
+    "handGesture_simple",
+    "raytracing_rays",
+    "generate_chest_vibration_target",
+    "generate_chest_vibration_target_simple",
+    "raytracing_refraction_test"
+  ],
+  "classes": {}
+},
+"sensingsp/environment/models.py": {
+  "functions": [
+    "create_car_material",
+    "create_wheel",
+    "create_body",
+    "create_roof",
+    "create_car"
+  ],
+  "classes": {}
+},
+"sensingsp/environment/environment.py": {
+  "functions": [
+    "constantVelocity",
+    "colorobject",
+    "add_cube",
+    "add_plane"
+  ],
+  "classes": {
+    "BlenderSuiteFinder": [
+      "find_suite_information",
+      "find_suite_planes",
+      "find_camera_planes",
+      "find_lidar_planes",
+      "find_radar_planes",
+      "find_tx",
+      "find_rx",
+      "find_risElement",
+      "find_ris_planes",
+      "find_probe_planes",
+      "find_probeSurface"
+    ]
+  }
+},
+"sensingsp/utils/output2matlab.py": {
+  "functions": [
+    "savemat_in_tmpfolder",
+    "file_in_tmpfolder",
+    "saveMatFile",
+    "saveScenario"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/stochastics.py": {
+  "functions": [
+    "Complex_Noise_Buffer"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/texturemapping.py": {
+  "functions": [
+    "interpolate_3d_from_uv_bpy",
+    "barycentric_coordinates",
+    "uv_map_image_to_sphere"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/utils.py": {
+  "functions": [
+    "export_radar_positions",
+    "subdivide_object",
+    "initialize_environment",
+    "initialize_simulation",
+    "set_RayTracing_advanced_intense",
+    "setRadar_oneCPI_in_oneFrame",
+    "setRadar_multipleCPI_in_oneFrame",
+    "set_configurations",
+    "set_RayTracing_balanced",
+    "set_RayTracing_light",
+    "set_raytracing_bounce",
+    "set_debugSettings",
+    "get_debugSettings",
+    "tic",
+    "toc",
+    "pointCloud_RangeAzimuthElevation_THR",
+    "azel2uv",
+    "sph2cart",
+    "cart2sph",
+    "imshow",
+    "plot",
+    "plot_text",
+    "initEnvironment",
+    "delete_all_objects",
+    "save_Blender",
+    "getRadarSpecs",
+    "useCUDA",
+    "set_frame_start_end",
+    "increaseCurrentFrame",
+    "total_paths",
+    "force_zeroDoppler_4Simulation",
+    "zeroDopplerCancellation_4Simulation",
+    "trimUserInputs0",
+    "trimUserInputs",
+    "modifyArrayinfowithFile",
+    "open_Blend",
+    "applyDecimate",
+    "cleanAllDecimateModifiers",
+    "mesh2triangles",
+    "createMeshesCollection_fromTrianglesRCS0",
+    "scale_unit_sphere",
+    "vectorize_triangleList",
+    "showTileImages",
+    "renderBlenderTriangles",
+    "exportBlenderTriangles",
+    "exportBlenderFaceCenters",
+    "decimate_scene",
+    "decimate_scene_all",
+    "plot1D",
+    "plot2D",
+    "open_folder",
+    "open_temp_folder",
+    "readImage_tempfolder",
+    "channels_info",
+    "set_axes_equal",
+    "exportBlenderPolygons"
+  ],
+  "classes": {
+    "RadarTiming": [
+      "__init__",
+      "update"
+    ],
+    "RadarBuffer": [
+      "__init__",
+      "buffer_pulses",
+      "get_buffered_cpis",
+      "get_remaining_pulses"
+    ]
+  }
+},
+"sensingsp/utils/processingfunctions.py": {
+  "functions": [
+    "processing_functions_run1",
+    "processing_functions_run2_old",
+    "processing_functions_run2",
+    "processing_functions_run3",
+    "processing_functions_RISProbe1",
+    "extrafunctions"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/blenderUI.py": {
+  "functions": [
+    "define_settings",
+    "blender_buttons_run_2"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/uiinputs.py": {
+  "functions": [
+    "QtUI_to_BlenderAddonUI",
+    "BlenderAddonUI_to_QtUI",
+    "BlenderAddonUI_to_RadarSpecifications",
+    "createRadarObject_from_QtUI",
+    "QtUI_arrays",
+    "setQtUI_arrays",
+    "set_TI_AWR1642_toQtUI",
+    "set_TI_IWR6843_toQtUI",
+    "set_TI_AWR2243_toQtUI",
+    "set_TI_AWR2944_toQtUI",
+    "set_TI_Cascade_AWR2243_toQtUI",
+    "set_SISO_mmWave76GHz_toQtUI",
+    "set_Xhetru_X4_toQtUI",
+    "set_Altos_toQtUI"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/predefines.py": {
+  "functions": [
+    "add_radar_string",
+    "add_sensors_string",
+    "add_radar",
+    "add_radar_Json",
+    "predefine_cube_cascade",
+    "predefine_movingcube_6843",
+    "add_camera",
+    "add_lidar",
+    "add_ris",
+    "add_JRC",
+    "add_Probe"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/research/simplest/__init__.py": {
+  "functions": [
+    "RayTracing",
+    "tx_rx_Location",
+    "RadarRawData",
+    "txNumber",
+    "rxNumber",
+    "PRF",
+    "ADCrate",
+    "FMCW_slew_rate",
+    "wavelength",
+    "txrxplot",
+    "RangeProcessing",
+    "DopplerProcessing",
+    "TDM_PhaseCompensation",
+    "CFAR2D",
+    "MIMOArrayOrder",
+    "DOAProcessing",
+    "CFAR2DAngle",
+    "printDetections",
+    "MIMORadarTechnique",
+    "MIMORadarTechniqueObj",
+    "setMIMO",
+    "ui_frame_processing"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/research/algorithms/ScenarioMultipath.py": {
+  "functions": [
+    "runSimpleScenario"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/research/algorithms/MLRadarHandGesture.py": {
+  "functions": [
+    "runSimpleScenario"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/research/algorithms/WifiSensing.py": {
+  "functions": [
+    "reflect_point",
+    "path_length_and_validity",
+    "image_method",
+    "build_cir",
+    "ofdm_params",
+    "ofdm_modulate",
+    "qam_mod",
+    "estimate_csi"
+  ],
+  "classes": {
+    "Plane": [
+      "__init__"
+    ]
+  }
+},
+"sensingsp/utils/research/algorithms/MLRadarHumanHealthMonitoring.py": {
+  "functions": [
+    "createChestMovement",
+    "runSimpleScenario",
+    "model_inference"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/research/algorithms/TDMPhaseCompensation.py": {
+  "functions": [
+    "runSimpleScenario"
+  ],
+  "classes": {}
+},
+"sensingsp/utils/hub.py": {
+  "functions": [
+    "download_file",
+    "load_metadata",
+    "fetch_file",
+    "visualize_file",
+    "visualize_hub",
+    "visualize_downloaded_files",
+    "list_downloaded_files",
+    "fetch_all_files",
+    "fetch_random_file",
+    "available_files",
+    "download_zipfile_extract_remove",
+    "available_models",
+    "load_model_metadata",
+    "fetch_pretrained_model"
+  ],
+  "classes": {}
+},
+
+"sensingsp/integratedSensorSuite/integratedSensorSuite.py": {
+  "functions": [
+    "define_suite",
+    "SensorsSignalGeneration",
+    "SensorsSignalGeneration_frame",
+    "CUDA_signalGeneration",
+    "Sim_CUDA_signalGeneration",
+    "push_radar_buffer",
+    "pop_radar_buffer",
+    "SensorsSignalProccessing",
+    "SensorsSignalProccessing_Angle",
+    "SensorsSignalProccessing_Angle_frame",
+    "polar_range_angle",
+    "SensorsSignalProccessing_Chain_RangeProfile_RangeDoppler_AngleDoppler_old",
+    "SensorsSignalProccessing_Chain_RangeProfile_RangeDoppler_AngleDoppler",
+    "SensorsSignalProccessing_Chain_DAR",
+    "SensorsSignalProccessing_WinvTDM",
+    "SensorsSignalProccessing_Chain_DAR_CoArray",
+    "SensorsSignalProccessing_Chain_RangeProfile_RangeDoppler_AngleDoppler_TruckHuman",
+    "SensorsSignalProccessing_RIS_Included",
+    "SensorsSignalProccessing_RIS_Included_Probe",
+    "SensorsSignalProccessing_Chain_RangeProfile_RangeDoppler_AngleDoppler_2D"
+  ],
+  "classes": {}
+},
+"sensingsp/probe/utils.py": {
+  "functions": [
+    "sph2cart",
+    "add_probe"
+  ],
+  "classes": {}
+},
+"sensingsp/config.py": {
+  "functions": [],
+  "classes": {
+    "Config": [
+      "__init__",
+      "GPU_run_available",
+      "get_frame_end",
+      "release_videofigures",
+      "define_videofigures",
+      "define_axes",
+      "setDopplerProcessingMethod_FFT_Winv",
+      "restart",
+      "getCurrentFrame",
+      "run",
+      "get_system_type",
+      "check_latex_installed",
+      "install_latex_in_colab",
+      "check_ui_available",
+      "create_temp_folder"
+    ]
+  }
+},
+
+"sensingsp/camera/utils.py": {
+  "functions": [
+    "add_camera",
+    "render"
+  ],
+  "classes": {}
+},
+"sensingsp/hardware/radar/XethruUI.py": {
+  "functions": [
+    "list_available_ports",
+    "runapp"
+  ],
+  "classes": {
+    "RadarPlotCanvas": [
+      "__init__",
+      "update_plot"
+    ],
+    "GeneralDevice": [],
+    "RadarApp": [
+      "__init__",
+      "add_device",
+      "update_device_table",
+      "send_fcn",
+      "connect_device",
+      "update_plot",
+      "closeEvent"
+    ]
+  }
+},
+"sensingsp/hardware/radar/TImmWave.py": {
+  "functions": [
+    "read_config_file",
+    "find_magic_word",
+    "parse_header",
+    "parse_tlv",
+    "parse_detected_objects",
+    "parse_range_profile",
+    "parse_noise_profile"
+  ],
+  "classes": {
+    "MMWaveDevice": [
+      "__init__",
+      "connect",
+      "send_command",
+      "_read_data_loop",
+      "disconnect",
+      "send_config_file",
+      "process_data"
+    ]
+  }
+},
+"sensingsp/hardware/radar/XeThru.py": {
+  "functions": [
+    "parse_rf_data",
+    "parse_baseband_iq",
+    "set_detection_zone_command"
+  ],
+  "classes": {
+    "XeThruDevice": [
+      "__init__",
+      "connect",
+      "_read_data_loop",
+      "disconnect",
+      "init",
+      "set_RF_mode",
+      "process_data"
+    ]
+  }
+},
+"sensingsp/hardware/radar/DeviceUI.py": {
+  "functions": [
+    "list_available_ports",
+    "runapp"
+  ],
+  "classes": {
+    "RadarPlotCanvas": [
+      "__init__",
+      "update_plot"
+    ],
+    "GeneralDevice": [],
+    "RadarApp": [
+      "__init__",
+      "add_device",
+      "update_device_table",
+      "connect_device",
+      "update_plot",
+      "closeEvent"
+    ]
+  }
+},
+"sensingsp/raytracing/__init__.py": {
+  "functions": [],
+  "classes": {}
+},
+"sensingsp/raytracing/raytracing.py": {
+  "functions": [
+    "Path_RayTracing",
+    "run",
+    "Path_RayTracing_frame",
+    "calc_Path_TX",
+    "calc_Path_Middle",
+    "calc_Path_RX",
+    "paths_processing",
+    "tx2rx",
+    "tx2scatter_or_ris",
+    "scatter_amp",
+    "tx_amp",
+    "antenna_gain",
+    "rx_amp",
+    "tx_amp_ris",
+    "calc_Path_TX_functional",
+    "calc_Path_Middle_functional",
+    "calc_Path_RX_functional"
+  ],
+  "classes": {
+    "Vector3D": [
+      "__init__",
+      "distance_to",
+      "diff",
+      "__repr__"
+    ]
+  }
+},
+"sensingsp/lidar/utils.py": {
+  "functions": [
+    "add_lidar",
+    "pointcloud",
+    "isosphere_directions"
+  ],
+  "classes": {}
+}
+</pre>
+</section>
         <h2>Contact</h2>
         <p>For inquiries, suggestions, or contributions, feel free to reach out:</p>
         <p><strong>Moein Ahmadi</strong></p>
