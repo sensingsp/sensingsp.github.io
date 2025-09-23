@@ -126,55 +126,25 @@
             <li>Implement advanced radar and signal processing algorithms.</li>
             <li>Leverage machine learning techniques for enhanced sensing capabilities.</li>
         </ul>
-    
-        <h2>Installation</h2>
+    <h2>Installation</h2>
 
-<p><strong>SensingSP™ requires Python 3.10</strong>.</p>
+<p>Install <a href="https://download.blender.org/release/Blender4.0/">Blender 4.0</a>.</p>
 
-<h3>Local (standard Python)</h3>
-<p>Ensure you are using Python 3.10, then:</p>
-<pre><code class="language-bash">pip install sensingsp</code></pre>
+<p>Use <strong>SensingSP™</strong> directly inside Blender:</p>
 
-<h3>Google Colab (Python 3.10 without conda)</h3>
-<p>Colab defaults to Python 3.12. Switch the runtime to Python 3.10 and then install:</p>
-<pre><code class="language-bash"># Install Python 3.10
-!sudo apt-get update -y
-!sudo apt-get install -y python3.10 python3.10-distutils
-
-# Make Python 3.10 the active python3
-!sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
-!sudo update-alternatives --config python3
-
-# Restart the runtime
-import os, sys; os.kill(os.getpid(), 9)
-</code></pre>
-
-<p>After restart:</p>
-<pre><code class="language-bash"># Verify and set up pip
-!python3 --version
-!wget https://bootstrap.pypa.io/get-pip.py
-!python3 get-pip.py
-
-# Install SensingSP
-!python3 -m pip install --no-cache-dir sensingsp
-
-# (Optional) Install Blender's bpy for ray tracing with Python 3.10
-!python3 -m pip install https://download.blender.org/pypi/bpy/bpy-4.0.0-cp310-cp310-manylinux_2_28_x86_64.whl
-</code></pre>
-
-<h3>Windows — Install into Blender 4.0’s bundled Python</h3>
-<p>If you want to use SensingSP™ directly inside Blender (no separate Python needed):</p>
 <pre><code class="language-bash">@REM Open Command Prompt and run:
 cd "C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin"
-python.exe -m ensurepip --upgrade
-python.exe -m pip install --upgrade pip
-python.exe -m pip install sensingsp
+
+@REM Replace the path above with your Blender installation path if different
+python -m pip install sensingsp
 </code></pre>
 
 <p><em>Verify in Blender:</em> open the <strong>Scripting</strong> workspace and run:</p>
+
 <pre><code class="language-python">import sensingsp as ssp
 print("SensingSP version:", ssp.__version__)
 </code></pre>
+
 
 
 
