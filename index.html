@@ -140,28 +140,27 @@
         You can switch to Python 3.10 with the following commands:</p>
         
         <pre><code class="language-bash"># Install Python 3.10
-        !sudo apt-get update -y
-        !sudo apt-get install -y python3.10 python3.10-distutils
-        
-        # Set Python 3.10 as default
-        !sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
-        !sudo update-alternatives --config python3
+!sudo apt-get update -y
+!sudo apt-get install -y python3.10 python3.10-distutils
+
+# Set Python 3.10 as default
+!sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+!sudo update-alternatives --config python3
         
         </code></pre>
         
         <p>After restart:</p>
-        <pre><code class="language-bash"># Verify version
-        !python3 --version   # should show Python 3.10.x
-        
-        # Install pip
-        !wget https://bootstrap.pypa.io/get-pip.py
-        !python3 get-pip.py
-        
-        # Install SensingSP
-        !pip install sensingsp
-        
-        # (Optional) Install Blender's bpy for ray tracing
-        !pip install https://download.blender.org/pypi/bpy/bpy-4.0.0-cp310-cp310-manylinux_2_28_x86_64.whl
+<pre><code class="language-bash"># Verify version
+!python3 --version   # should show Python 3.10.x
+
+# Install pip
+!wget https://bootstrap.pypa.io/get-pip.py
+!python3 get-pip.py
+
+!pip install https://download.blender.org/pypi/bpy/bpy-4.0.0-cp310-cp310-manylinux_2_28_x86_64.whl        
+# Install SensingSP
+!pip install sensingsp
+
         </code></pre>
 
 
