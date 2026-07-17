@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SensingSP WiFi sensing simulation and MD-CSI processing: signal model, device configuration, reproducible pipeline, and validated results.">
+  <title>WiFi Sensing with SensingSP™</title>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+  <style>
+    :root {
+      --green: #4caf50;
+      --green-dark: #388e3c;
+      --green-soft: #e8f5e9;
+      --ink: #333;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --page: #f9f9f9;
+      --card: #fff;
+      --code: #f5f2f0;
+      --blue: #2878b5;
+      --amber: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    header {
+      color: #fff;
+      background: var(--green);
+      padding: 16px 0;
+    }
+
+    .header-inner {
+      width: min(920px, calc(100% - 40px));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    header h1 {
+      margin: 8px 0;
+      color: #263238;
+      font-size: clamp(1.55rem, 4vw, 2rem);
+      line-height: 1.25;
+    }
+
+    .home-link {
+      color: #17391a;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .home-link:hover { text-decoration: underline; }
+
+    .container {
+      width: min(920px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 26px;
+      background: var(--card);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    section { padding: 16px 0; }
+    section + section { border-top: 1px solid var(--line); }
+
+    h2 {
+      margin: 0 0 14px;
+      color: var(--ink);
+      font-size: 1.5rem;
+      line-height: 1.35;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1.08rem;
+      line-height: 1.4;
+    }
+
+    p { margin: 0 0 16px; }
+    a { color: var(--green); }
+
+    .hero {
+      padding: 26px 0 30px;
+      display: grid;
+      grid-template-columns: 1.35fr 0.65fr;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: var(--green-dark);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero h2 {
+      margin-bottom: 12px;
+      font-size: clamp(1.8rem, 5vw, 2.65rem);
+      line-height: 1.12;
+    }
+
+    .lead {
+      color: #4b5563;
+      font-size: 1.08rem;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .badge {
+      padding: 5px 10px;
+      color: #256029;
+      background: var(--green-soft);
+      border: 1px solid #c8e6c9;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .button {
+      display: inline-block;
+      padding: 9px 14px;
+      border: 1px solid var(--green);
+      border-radius: 5px;
+      color: #fff;
+      background: var(--green);
+      font-weight: 700;
+      text-decoration: none;
+      transition: 160ms ease;
+    }
+
+    .button:hover {
+      color: #fff;
+      background: var(--green-dark);
+      border-color: var(--green-dark);
+      transform: translateY(-1px);
+    }
+
+    .button.secondary {
+      color: var(--green-dark);
+      background: #fff;
+    }
+
+    .hero-visual {
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 68% 28%, rgba(76,175,80,.25), transparent 32%),
+        linear-gradient(145deg, #f7fff7, #eef7ef);
+      border: 1px solid #dceedd;
+      overflow: hidden;
+    }
+
+    .hero-visual svg { width: 100%; height: auto; }
+
+    .stat-grid,
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .stat,
+    .card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--green-dark);
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }
+
+    .stat span,
+    .card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .card p { margin: 0; }
+
+    .pipeline {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 112px;
+      padding: 14px 12px;
+      border: 1px solid #d7ead8;
+      border-radius: 7px;
+      background: #fbfffb;
+      text-align: center;
+    }
+
+    .stage:not(:last-child)::after {
+      content: "›";
+      position: absolute;
+      top: 37px;
+      right: -10px;
+      z-index: 2;
+      color: var(--green);
+      background: #fff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stage-number {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 8px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--green);
+      border-radius: 50%;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .stage strong { display: block; font-size: 0.88rem; line-height: 1.3; }
+    .stage small { color: var(--muted); font-size: 0.74rem; line-height: 1.25; }
+
+    .equation {
+      margin: 14px 0;
+      padding: 14px;
+      overflow-x: auto;
+      border-left: 4px solid var(--green);
+      background: #f8fbf8;
+      text-align: center;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.94rem;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #f6faf6; }
+
+    pre[class*="language-"] {
+      max-width: 100%;
+      margin: 8px 0;
+      padding: 16px;
+      overflow: auto;
+      border-radius: 5px;
+      background: var(--code);
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      font-size: 0.92rem;
+    }
+
+    .chart-shell {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    #results-chart {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .legend i {
+      width: 18px;
+      height: 3px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+      background: var(--blue);
+    }
+
+    .legend .truth { background: var(--amber); }
+
+    .note,
+    .warning {
+      margin: 16px 0 0;
+      padding: 14px 16px;
+      border-radius: 6px;
+    }
+
+    .note {
+      color: #245627;
+      background: var(--green-soft);
+      border: 1px solid #c8e6c9;
+    }
+
+    .warning {
+      color: #744b00;
+      background: #fff8e6;
+      border: 1px solid #f6d78b;
+    }
+
+    .checklist {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      position: relative;
+      padding: 5px 0 5px 28px;
+    }
+
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 5px;
+      color: var(--green-dark);
+      font-weight: 800;
+    }
+
+    footer {
+      margin-top: 20px;
+      padding: 16px 20px 28px;
+      color: #777;
+      text-align: center;
+    }
+
+    footer a { color: var(--green); }
+
+    @media (max-width: 760px) {
+      .header-inner { align-items: flex-start; flex-direction: column; gap: 0; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-visual { min-height: 180px; }
+      .stat-grid, .card-grid { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr; }
+      .stage { min-height: 0; text-align: left; }
+      .stage-number { display: inline-grid; margin: 0 8px 0 0; vertical-align: middle; }
+      .stage strong { display: inline; }
+      .stage small { display: block; margin: 5px 0 0 40px; }
+      .stage:not(:last-child)::after {
+        content: "⌄";
+        top: auto;
+        right: 50%;
+        bottom: -13px;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .container, .header-inner { width: min(100% - 22px, 920px); }
+      .container { padding: 18px; }
+      .actions { flex-direction: column; }
+      .button { text-align: center; }
+      th, td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>SensingSP™ WiFi Sensing</h1>
+      <a class="home-link" href="index.html" aria-label="Return to SensingSP home">← SensingSP Home</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <div class="eyebrow">Simulation · Signal Processing · Tracking</div>
+        <h2 id="hero-title">From ray-traced WiFi propagation to motion parameters</h2>
+        <p class="lead"><strong>SensingSP™</strong> generates complex Channel State Information in a controlled 3D scene, then applies a multi-point differential CSI pipeline to estimate Doppler, angle of arrival, and bistatic path information.</p>
+        <div class="badges" aria-label="Device settings">
+          <span class="badge">5.32 GHz</span>
+          <span class="badge">1 TX × 3 RX</span>
+          <span class="badge">30 subcarriers</span>
+          <span class="badge">1 kHz CSI</span>
+        </div>
+        <div class="actions">
+          <a class="button" href="#reproduce">Run the pipeline</a>
+          <a class="button secondary" href="#signal-model">View signal model</a>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="Conceptual bistatic WiFi sensing scene">
+        <svg viewBox="0 0 320 230" role="img" aria-labelledby="scene-title scene-desc">
+          <title id="scene-title">Bistatic WiFi sensing geometry</title>
+          <desc id="scene-desc">A transmitter illuminates a moving target while a three-element receiver array captures direct and reflected signals.</desc>
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#4caf50"/></marker>
+            <filter id="soft"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".16"/></filter>
+          </defs>
+          <path d="M55 164 Q155 34 268 151" fill="none" stroke="#4caf50" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+          <path d="M58 172 L264 172" fill="none" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5 5"/>
+          <g filter="url(#soft)">
+            <rect x="27" y="145" width="55" height="42" rx="7" fill="#fff" stroke="#4caf50" stroke-width="2"/>
+            <text x="54" y="163" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#333">WiFi TX</text>
+            <text x="54" y="178" text-anchor="middle" font-family="Arial" font-size="9" fill="#6b7280">1 antenna</text>
+          </g>
+          <g transform="translate(142 76)" filter="url(#soft)">
+            <circle cx="20" cy="13" r="10" fill="#fff" stroke="#388e3c" stroke-width="2"/>
+            <path d="M20 24 L20 60 M20 34 L4 48 M20 34 L37 46 M20 60 L7 82 M20 60 L37 81" fill="none" stroke="#388e3c" stroke-width="4" stroke-linecap="round"/>
+            <path d="M47 42 L73 42" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrow)"/>
+          </g>
+          <g filter="url(#soft)">
+            <rect x="245" y="139" width="50" height="52" rx="7" fill="#fff" stroke="#4caf50" stroke-width="2"/>
+            <circle cx="255" cy="153" r="4" fill="#4caf50"/><circle cx="270" cy="153" r="4" fill="#4caf50"/><circle cx="285" cy="153" r="4" fill="#4caf50"/>
+            <text x="270" y="174" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#333">RX ULA</text>
+          </g>
+          <text x="157" y="207" text-anchor="middle" font-family="Arial" font-size="10" fill="#6b7280">direct path + target-reflected path</text>
+        </svg>
+      </div>
+    </section>
+
+    <section aria-labelledby="overview-title">
+      <h2 id="overview-title">Project overview</h2>
+      <p>The project connects the SensingSP ray tracer to a research-grade WiFi sensing workflow. <code>wifisensing_generateCSI.py</code> converts propagation paths into complex CSI and stores the tensor as <code>Total_H_Signal.npy</code>. The processor then works directly on that simulated CSI.</p>
+      <div class="stat-grid">
+        <div class="stat"><strong>3 × 30 × 760</strong><span>RX × subcarrier × time CSI tensor</span></div>
+        <div class="stat"><strong>128 / 64</strong><span>window length / hop size in samples</span></div>
+        <div class="stat"><strong>&gt; 0.997</strong><span>rank-one CP fit on the current simulation</span></div>
+      </div>
+
+      <div class="pipeline" aria-label="Processing pipeline">
+        <div class="stage"><span class="stage-number">1</span><strong>3D scene</strong><small>TX, RX ULA, target</small></div>
+        <div class="stage"><span class="stage-number">2</span><strong>Ray tracing</strong><small>distance, rate, amplitude</small></div>
+        <div class="stage"><span class="stage-number">3</span><strong>Complex CSI</strong><small>space × frequency × time</small></div>
+        <div class="stage"><span class="stage-number">4</span><strong>MD-CSI + CP</strong><small>static removal and factors</small></div>
+        <div class="stage"><span class="stage-number">5</span><strong>Parameters</strong><small>Doppler, AoA, excess path</small></div>
+      </div>
+    </section>
+
+    <section id="signal-model" aria-labelledby="model-title">
+      <h2 id="model-title">Signal model</h2>
+      <p>The simulated channel combines static and target-dependent propagation, with optional timing and carrier-frequency offsets:</p>
+      <div class="equation">
+        \[
+        \widetilde{H}_{i,j,k}=e^{\mathrm{j}\phi^{\mathrm{offset}}_{j,k}}
+        \left(H^{\mathrm S}_{i,j}+H^{\mathrm D}_{i,j,k}\right)+N_{i,j,k}.
+        \]
+      </div>
+      <p>For a dominant moving path, the dynamic component is modeled across antenna, subcarrier, and slow time as</p>
+      <div class="equation">
+        \[
+        H^{\mathrm D}_{i,j,k}=A_{i,j,k}
+        \exp\!\left[-\mathrm{j}\frac{2\pi f_j}{c}
+        \left(d_0+(i-1)\Delta d\sin\theta+\dot d\,k\Delta t\right)\right].
+        \]
+      </div>
+      <p>Multi-point differencing removes the static component over a short window:</p>
+      <div class="equation">
+        \[
+        X(i,j,k)=H^{c}_{i,j,k}-H^{c}_{i,j,k_0}
+        \approx \lambda\,a_i\circ b_j\circ c_k.
+        \]
+      </div>
+      <div class="note"><strong>Implementation detail.</strong> The CP time factor has arbitrary complex phase. The processor therefore fits a general complex circle before unwrapping its phase, making Doppler estimation invariant to CP phase rotation.</div>
+    </section>
+
+    <section aria-labelledby="settings-title">
+      <h2 id="settings-title">Simulation and device settings</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Value</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Center frequency</td><td>5.32 GHz</td><td>Intel 5300-compatible WiFi sensing configuration</td></tr>
+            <tr><td>Array</td><td>1 TX, 3 RX</td><td>Three-element receive ULA</td></tr>
+            <tr><td>RX spacing</td><td>\(\lambda/2\)</td><td>Spatial phase sampling for AoA</td></tr>
+            <tr><td>Subcarriers</td><td>30</td><td>Frequency-domain CSI samples</td></tr>
+            <tr><td>Subcarrier spacing</td><td>312.5 kHz</td><td>9.375 MHz occupied frequency span</td></tr>
+            <tr><td>CSI sampling rate</td><td>1 kHz</td><td>Slow-time Doppler sampling</td></tr>
+            <tr><td>TX position</td><td>(1, 1, 2) m</td><td>Fixed transmitter</td></tr>
+            <tr><td>RX reference position</td><td>(9, 7, 2) m</td><td>First ULA element</td></tr>
+            <tr><td>Target motion</td><td>+x at 0.5 m/s</td><td>Current point-target experiment</td></tr>
+            <tr><td>Window / overlap</td><td>128 / 64 samples</td><td>Parameter estimation every 64 ms</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="processing-title">
+      <h2 id="processing-title">Processing pipeline</h2>
+      <div class="card-grid">
+        <div class="card"><h3>1. Phase reference</h3><p>Optionally extract the dominant LoS direction with MVDR and compensate common packet phase.</p></div>
+        <div class="card"><h3>2. Static suppression</h3><p>Subtract the first CSI sample in each window from all samples to form MD-CSI.</p></div>
+        <div class="card"><h3>3. Tensor separation</h3><p>Apply complex rank-one CP-ALS to obtain spatial, frequency, and temporal factors.</p></div>
+        <div class="card"><h3>4. Doppler</h3><p>Fit the time factor to a complex circle, unwrap the centered phase, and estimate its slope.</p></div>
+        <div class="card"><h3>5. AoA</h3><p>Match the spatial factor to a ULA steering dictionary using one-atom OMP.</p></div>
+        <div class="card"><h3>6. Path parameter</h3><p>Match the frequency factor to delay hypotheses and recover the dominant excess path.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="results-title">
+      <h2 id="results-title">Results on simulated CSI</h2>
+      <p>The supplied file provides ten overlapping windows. Estimates follow the expected geometry and remain highly rank-one.</p>
+      <div class="chart-shell">
+        <svg id="results-chart" viewBox="0 0 860 470" role="img" aria-labelledby="chart-title chart-desc">
+          <title id="chart-title">Estimated and geometry-derived WiFi sensing parameters</title>
+          <desc id="chart-desc">Three plots compare Doppler, angle of arrival, and excess path length over ten processing windows.</desc>
+        </svg>
+        <div class="legend"><span><i></i>MD-CSI estimate</span><span><i class="truth"></i>Geometry reference</span></div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:16px">
+        <table>
+          <thead><tr><th>Output</th><th>MD-CSI estimate</th><th>Geometry reference</th><th>Interpretation</th></tr></thead>
+          <tbody>
+            <tr><td>Doppler</td><td>−0.40 to −1.01 Hz</td><td>−0.34 to −0.93 Hz</td><td>Increasing bistatic path rate</td></tr>
+            <tr><td>AoA</td><td>39.75° to 38.25°</td><td>39.34° to 37.96°</td><td>Arrival direction relative to the x-axis ULA</td></tr>
+            <tr><td>Excess path</td><td>2.56–2.58 m</td><td>2.44–2.46 m</td><td>Reflected path minus direct TX–RX path</td></tr>
+            <tr><td>CP fit</td><td>0.9977–0.9986</td><td>—</td><td>Strong single-component structure</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warning"><strong>Geometry note.</strong> The frequency factor does not directly provide RX-to-target range. In this bistatic setup, it represents target-dependent propagation relative to the direct 10 m TX–RX path. A tracker should use a bistatic measurement model rather than directly applying a monostatic polar UKF.</div>
+    </section>
+
+    <section id="reproduce" aria-labelledby="reproduce-title">
+      <h2 id="reproduce-title">Reproduce the experiment</h2>
+      <p>First generate the complex CSI tensor inside Blender with SensingSP:</p>
+      <pre class="language-python"><code class="language-python"># Run inside Blender's Python environment
+exec(open("wifisensing_generateCSI.py").read())
+
+# Output shape: (3 RX, 30 subcarriers, time samples)
+# File: Total_H_Signal.npy</code></pre>
+
+      <p>Then run the standalone MD-CSI processor:</p>
+      <pre class="language-bash"><code class="language-bash">python wifi_md_csi_processing.py Total_H_Signal.npy \
+  --fs 1000 \
+  --fc 5.32e9 \
+  --window 128 \
+  --hop 64 \
+  --compensation none \
+  --output-prefix md_csi_results</code></pre>
+
+      <p>The command writes a CSV containing one estimate per window and a PNG summary figure.</p>
+      <ul class="checklist">
+        <li>Use <code>--compensation none</code> for the current noiseless simulation.</li>
+        <li>Enable MVDR compensation after adding time-varying CFO/TO packet phase.</li>
+        <li>Add complex AWGN after summing all propagation paths.</li>
+        <li>Keep the same CFO/TO realization across RX antennas for each packet.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="next-title">
+      <h2 id="next-title">Recommended next experiment</h2>
+      <p>To evaluate the complete paper pipeline, extend the simulator with random packet-dependent timing and carrier offsets, calibrated AWGN from 5–25 dB SNR, a longer 2D target trajectory, and ground-truth target positions saved alongside the CSI.</p>
+      <div class="note"><strong>Suggested output bundle:</strong> <code>Total_H_Signal.npy</code>, <code>timestamps.npy</code>, <code>target_position.npy</code>, and a JSON file containing TX/RX geometry and all WiFi parameters.</div>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 SensingSP™ · <a href="https://sensingsp.github.io/">sensingsp.github.io</a>
+  </footer>
+
+  <script>
+    (() => {
+      const t = [0.0635,0.1275,0.1915,0.2555,0.3195,0.3835,0.4475,0.5115,0.5755,0.6395];
+      const panels = [
+        {label:'Doppler (Hz)', estimate:[-0.399,-0.431,-0.531,-0.572,-0.663,-0.747,-0.795,-0.879,-0.927,-1.006], truth:[-0.342,-0.411,-0.479,-0.546,-0.612,-0.677,-0.742,-0.805,-0.868,-0.930], min:-1.08,max:-0.25},
+        {label:'AoA (deg)', estimate:[39.75,39.50,39.25,39.25,39.00,38.75,38.75,38.50,38.50,38.25], truth:[39.34,39.19,39.04,38.89,38.74,38.58,38.43,38.27,38.12,37.96], min:37.7,max:40.0},
+        {label:'Excess path (m)', estimate:[2.58,2.58,2.58,2.58,2.58,2.58,2.58,2.58,2.56,2.56], truth:[2.435,2.436,2.438,2.440,2.442,2.444,2.447,2.450,2.453,2.456], min:2.40,max:2.61}
+      ];
+      const svg = document.getElementById('results-chart');
+      const NS = 'http://www.w3.org/2000/svg';
+      const W = 860, left = 92, right = 20, plotW = W-left-right, panelH = 125;
+      const add = (tag, attrs, text) => {
+        const el = document.createElementNS(NS, tag);
+        Object.entries(attrs || {}).forEach(([k,v]) => el.setAttribute(k,v));
+        if (text !== undefined) el.textContent = text;
+        svg.appendChild(el);
+        return el;
+      };
+      const path = (values, p, y0) => values.map((v,i) => {
+        const x = left + i * plotW / (values.length-1);
+        const y = y0 + panelH - 26 - (v-p.min)/(p.max-p.min)*(panelH-38);
+        return `${i?'L':'M'}${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+
+      panels.forEach((p,pi) => {
+        const y0 = 12 + pi*148;
+        add('rect',{x:left,y:y0,width:plotW,height:panelH,rx:4,fill:'#fbfbfb',stroke:'#e5e7eb'});
+        [0,.5,1].forEach(q => {
+          const y = y0 + 12 + q*(panelH-38);
+          const value = p.max-q*(p.max-p.min);
+          add('line',{x1:left,y1:y,x2:W-right,y2:y,stroke:'#e5e7eb','stroke-width':1});
+          add('text',{x:left-9,y:y+4,'text-anchor':'end','font-family':'Arial','font-size':11,fill:'#6b7280'},value.toFixed(pi===2?2:1));
+        });
+        add('text',{x:18,y:y0+panelH/2,transform:`rotate(-90 18 ${y0+panelH/2})`,'text-anchor':'middle','font-family':'Arial','font-size':12,'font-weight':700,fill:'#333'},p.label);
+        add('path',{d:path(p.truth,p,y0),fill:'none',stroke:'#f59e0b','stroke-width':2,'stroke-dasharray':'5 4'});
+        add('path',{d:path(p.estimate,p,y0),fill:'none',stroke:'#2878b5','stroke-width':2.5});
+        p.estimate.forEach((v,i) => {
+          const x = left+i*plotW/(p.estimate.length-1);
+          const y = y0+panelH-26-(v-p.min)/(p.max-p.min)*(panelH-38);
+          add('circle',{cx:x,cy:y,r:3.1,fill:'#2878b5'});
+        });
+        if (pi===2) {
+          t.forEach((v,i) => {
+            if (i%2===0 || i===t.length-1) {
+              const x=left+i*plotW/(t.length-1);
+              add('text',{x,y:y0+panelH+16,'text-anchor':'middle','font-family':'Arial','font-size':10,fill:'#6b7280'},v.toFixed(2));
+            }
+          });
+          add('text',{x:left+plotW/2,y:y0+panelH+34,'text-anchor':'middle','font-family':'Arial','font-size':12,'font-weight':700,fill:'#333'},'Window center time (s)');
+        }
+      });
+    })();
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script>
+    window.MathJax = {tex: {inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']]}, svg: {fontCache: 'global'}};
+  </script>
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+</body>
+</html>
