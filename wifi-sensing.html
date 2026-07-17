@@ -363,6 +363,63 @@
       font-weight: 800;
     }
 
+    .walkthrough {
+      display: grid;
+      gap: 14px;
+      counter-reset: code-step;
+    }
+
+    .walk-step {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .step-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin-bottom: 8px;
+    }
+
+    .step-index {
+      flex: 0 0 30px;
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--green);
+      border-radius: 50%;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .step-head h3 { margin: 2px 0 0; }
+    .walk-step p:last-child { margin-bottom: 0; }
+
+    .code-map {
+      margin: 12px 0 16px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 18px;
+      color: #4b5563;
+      background: #f8fbf8;
+      border-left: 4px solid var(--green);
+    }
+
+    .code-map code { color: #245627; font-weight: 700; }
+
+    .inline-formula {
+      padding: 2px 6px;
+      color: #245627;
+      background: var(--green-soft);
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
     footer {
       margin-top: 20px;
       padding: 16px 20px 28px;
@@ -377,6 +434,7 @@
       .hero { grid-template-columns: 1fr; }
       .hero-visual { min-height: 180px; }
       .stat-grid, .card-grid { grid-template-columns: 1fr; }
+      .code-map { grid-template-columns: 1fr; }
       .pipeline { grid-template-columns: 1fr; }
       .stage { min-height: 0; text-align: left; }
       .stage-number { display: inline-grid; margin: 0 8px 0 0; vertical-align: middle; }
@@ -530,6 +588,199 @@
         <div class="card"><h3>4. Doppler</h3><p>Fit the time factor to a complex circle, unwrap the centered phase, and estimate its slope.</p></div>
         <div class="card"><h3>5. AoA</h3><p>Match the spatial factor to a ULA steering dictionary using one-atom OMP.</p></div>
         <div class="card"><h3>6. Path parameter</h3><p>Match the frequency factor to delay hypotheses and recover the dominant excess path.</p></div>
+      </div>
+    </section>
+
+    <section id="code-explanation" aria-labelledby="code-title">
+      <h2 id="code-title">Code walkthrough</h2>
+      <p>The project is separated into two programs. The first program creates physically structured CSI from a Blender scene. The second program treats the saved array as measured CSI and estimates motion parameters without needing Blender.</p>
+
+      <h3 style="margin-top:20px"><code>wifisensing_generateCSI.py</code> — CSI generation</h3>
+      <div class="code-map" aria-label="Generator code map">
+        <div><code>Scene definition</code><br>TX, RX array, target, motion</div>
+        <div><code>Ray tracing</code><br>path distance, rate, amplitude</div>
+        <div><code>Channel synthesis</code><br>phase over frequency and time</div>
+        <div><code>Saved product</code><br>complex CSI tensor and diagnostics</div>
+      </div>
+
+      <div class="walkthrough">
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">1</span><h3>Initialize SensingSP and define the receive array</h3></div>
+          <p>The script initializes a SensingSP scene, creates one transmitter and three receivers, and calculates half-wavelength RX spacing at 5.32 GHz. Because <code>array_axis=[1,0,0]</code>, the ULA lies on the global x-axis.</p>
+          <pre class="language-python"><code class="language-python">NTX, NRX = 1, 3
+C = 299_792_458.0
+FC = 5.32e9
+wavelength = C / FC
+rx_spacing = wavelength / 2.0
+
+tx_position = np.array([1.0, 1.0, 2.0])
+rx1_position = np.array([9.0, 7.0, 2.0])
+array_axis = np.array([1.0, 0.0, 0.0])</code></pre>
+          <p>RX 2 and RX 3 are placed at one and two times <code>rx_spacing</code> from RX 1. The spatial phase difference across these elements later carries AoA information.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">2</span><h3>Create and animate the target</h3></div>
+          <p>A 10 cm cube with unit radar cross section is used as the moving scatterer. Two Blender keyframes define motion along +x, and linear interpolation produces constant Cartesian velocity between them.</p>
+          <pre class="language-python"><code class="language-python">endframe = 20
+target_1["RCS0"] = 1
+radial_velocity = 0.5
+T = 1.0 / bpy.context.scene.render.fps
+
+target_1.keyframe_insert(data_path="location", frame=1)
+target_1.location.x = 3 + radial_velocity * T * (endframe - 1)
+target_1.keyframe_insert(data_path="location", frame=endframe)</code></pre>
+          <p>The variable name <code>radial_velocity</code> is slightly misleading: the target has a fixed x-velocity, while its bistatic radial velocity is the time derivative of the complete TX–target–RX path.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">3</span><h3>Create the CSI sampling grid</h3></div>
+          <p>The CSI cube uses the ordering <span class="inline-formula">RX × subcarrier × time</span>. Thirty subcarriers are centered around 5.32 GHz with 312.5 kHz spacing.</p>
+          <pre class="language-python"><code class="language-python">WIFI_CSI_FS = 40 * bpy.context.scene.render.fps
+WIFI_CSI_SubCarriers_Count = 30
+SubCarrier_Freq_Spacing = 312.5e3
+
+SubCarrier_Freqs = FC + (
+    np.arange(WIFI_CSI_SubCarriers_Count) - 14.5
+) * SubCarrier_Freq_Spacing
+
+Total_H_Signal = np.zeros(
+    (NRX, WIFI_CSI_SubCarriers_Count, WIFI_CSI_Time_Slot_Count),
+    dtype=np.complex64,
+)</code></pre>
+          <p>At Blender’s default 25 frames/s, <code>40 × fps</code> gives a 1 kHz CSI rate. For reproducible experiments, it is safer to assign <code>WIFI_CSI_FS=1000</code> directly instead of deriving it from the render frame rate.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">4</span><h3>Convert every propagation path into complex CSI</h3></div>
+          <p>For each Blender frame, SensingSP returns all valid paths as <code>(distance, distance_rate, amplitude)</code>. Distance is propagated within the frame using a constant-rate model. The path contribution is then evaluated at every subcarrier and CSI time.</p>
+          <pre class="language-python"><code class="language-python">d_over_time = distance + distance_rate * time
+
+phi_distance = (
+    -2 * np.pi / C
+    * d_over_time[None, :]
+    * SubCarrier_Freqs[:, None]
+)
+
+scatter_signal = amplitude * np.exp(
+    1j * (phi_distance
+          + phi_offset_cfo[None, :]
+          + phase_offset_to[:, None])
+)
+
+Total_H_Signal[RX_Antenna_Index][:, indices] += scatter_signal</code></pre>
+          <p>The term <span class="inline-formula">−2πf d(t)/c</span> is propagation phase. CFO produces phase progression in time, while timing offset produces a phase slope across subcarriers. Contributions from direct, static-reflection, and target-reflection paths are added coherently.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">5</span><h3>Save and inspect the generated tensor</h3></div>
+          <p>The final complex tensor is saved with NumPy. The remaining plotting code displays CSI magnitude, wrapped phase, a two-dimensional delay–Doppler FFT, and an STFT averaged across subcarriers.</p>
+          <pre class="language-python"><code class="language-python">np.save("Total_H_Signal.npy", Total_H_Signal)
+
+# For receiver i:
+H = Total_H_Signal[i]       # shape: (subcarrier, time)
+H_fft_2d = np.fft.fftshift(np.fft.fft2(H))</code></pre>
+          <div class="warning"><strong>Current simulation switches.</strong> Noise is multiplied by zero, CFO is <code>0 × 100 Hz</code>, and TO is a fixed 50 ns. Consequently, the current file is effectively noiseless and does not require random packet-phase compensation.</div>
+        </article>
+      </div>
+
+      <h3 style="margin-top:28px"><code>wifi_md_csi_processing.py</code> — MD-CSI processing</h3>
+      <div class="code-map" aria-label="Processor code map">
+        <div><code>Input</code><br>complex NumPy CSI tensor</div>
+        <div><code>Pre-processing</code><br>windowing, optional MVDR, differencing</div>
+        <div><code>Factorization</code><br>complex rank-one CP-ALS</div>
+        <div><code>Output</code><br>Doppler, AoA, path, fit, CSV, PNG</div>
+      </div>
+
+      <div class="walkthrough">
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">1</span><h3>Validate the data and construct parameter grids</h3></div>
+          <p>The processor verifies that the input is a three-dimensional complex array. It then constructs subcarrier frequencies, an AoA grid, a path-length grid, and their corresponding dictionaries.</p>
+          <pre class="language-python"><code class="language-python">h = np.load(args.input)
+
+sc_freqs = args.fc + (
+    np.arange(n_sc) - (n_sc - 1) / 2
+) * args.subcarrier_spacing
+
+angle_grid = np.arange(args.aoa_min, args.aoa_max, args.aoa_step)
+range_grid = np.arange(args.range_min, args.range_max, args.range_step)</code></pre>
+          <p>The range and AoA phase signs are separate command-line settings because propagation, array-axis, and arrival-direction conventions can produce different signs.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">2</span><h3>Optionally obtain a LoS phase reference with MVDR</h3></div>
+          <p>For each subcarrier, the code estimates a forward–backward averaged spatial covariance matrix with diagonal loading. It searches the MVDR spectrum for the dominant direction, forms the distortionless weight vector, and extracts a LoS reference signal.</p>
+          <pre class="language-python"><code class="language-python">r = h @ h.conj().T / n_time
+r = 0.5 * (r + J @ r.conj() @ J) + loading * I
+
+r_inv_a = np.linalg.solve(r, a_los)
+w = r_inv_a / (a_los.conj() @ r_inv_a)
+h_los = w.conj() @ h[:, j_sc, :]
+
+h_comp[:, j_sc, :] = h[:, j_sc, :] * np.exp(
+    -1j * np.angle(h_los)
+)[None, :]</code></pre>
+          <p>Use this stage only when the simulated or measured CSI contains a common time-varying packet phase. It is disabled for the supplied noiseless file.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">3</span><h3>Form the multi-point differential tensor</h3></div>
+          <p>Each 128-sample window is differenced from its first sample. A static path is constant within the window and therefore cancels, while a moving path remains.</p>
+          <pre class="language-python"><code class="language-python">for start in range(0, n_time - window + 1, hop):
+    hw = h[:, :, start:start + window]
+    x_md = hw - hw[:, :, :1]</code></pre>
+          <p>The resulting tensor <span class="inline-formula">x_md.shape = (N<sub>RX</sub>, N<sub>SC</sub>, N<sub>time</sub>)</span> retains the spatial, frequency, and Doppler structure of the dominant moving path.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">4</span><h3>Separate space, frequency, and time with CP-ALS</h3></div>
+          <p>For a single dominant target, the differential tensor is approximated by one outer product, <span class="inline-formula">X ≈ a ∘ b ∘ c</span>. SVD supplies an initial guess and alternating least squares repeatedly updates one factor while holding the other two fixed.</p>
+          <pre class="language-python"><code class="language-python">a = einsum("ijk,j,k-&gt;i", X, b.conj(), c.conj()) / denominator
+b = einsum("ijk,i,k-&gt;j", X, a.conj(), c.conj()) / denominator
+c = einsum("ijk,i,j-&gt;k", X, a.conj(), b.conj()) / denominator
+
+X_hat = np.einsum("i,j,k-&gt;ijk", a, b, c)
+fit = 1 - np.linalg.norm(X - X_hat) / np.linalg.norm(X)</code></pre>
+          <p><code>a</code> contains spatial phase, <code>b</code> contains subcarrier phase, and <code>c</code> contains time evolution. Normalization removes scale ambiguity, while the CP fit measures how well a single target explains the tensor.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">5</span><h3>Recover Doppler from the temporal factor</h3></div>
+          <p>Multi-point differencing makes the complex time factor trace a circle. Instead of forcing the circle center onto the real axis, the code fits a general complex center. This makes the method invariant to the arbitrary phase rotation of CP factors.</p>
+          <pre class="language-python"><code class="language-python">design = np.column_stack((x, y, np.ones_like(x)))
+rhs = -(x*x + y*y)
+d, e, _ = np.linalg.lstsq(design, rhs, rcond=None)[0]
+
+center = -0.5 * (d + 1j * e)
+continuous = c_factor - center
+phase = np.unwrap(np.angle(continuous))
+fd = np.polyfit(time, phase, 1)[0] / (2 * np.pi)</code></pre>
+          <p>Subtracting the fitted center converts the differential factor back into a rotating phasor. Its unwrapped phase slope is <span class="inline-formula">2πf<sub>d</sub></span>.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">6</span><h3>Estimate AoA and excess path by dictionary matching</h3></div>
+          <p>The normalized spatial and frequency factors are correlated with all dictionary atoms. Selecting the largest correlation is equivalent to one-atom OMP for a single target.</p>
+          <pre class="language-python"><code class="language-python">factor = factor / np.linalg.norm(factor)
+dictionary = dictionary / np.linalg.norm(dictionary, axis=0)
+
+score = np.abs(dictionary.conj().T @ factor)
+estimate = grid[np.argmax(score)]</code></pre>
+          <p>The spatial dictionary gives AoA. The frequency dictionary gives the dominant delay-related path parameter; in the current simulation it behaves as excess bistatic path length rather than RX-to-target distance.</p>
+        </article>
+
+        <article class="walk-step">
+          <div class="step-head"><span class="step-index">7</span><h3>Write window-level results</h3></div>
+          <p>Every valid window produces an <code>Estimate</code> containing time, Doppler, path length, AoA, CP fit, and optional LoS angle. Results are exported to CSV and plotted into a four-panel PNG.</p>
+          <pre class="language-python"><code class="language-python">Estimate(
+    time_s=window_center / fs,
+    doppler_hz=fd,
+    path_length_m=d,
+    aoa_deg=theta,
+    cp_fit=cp_fit,
+    los_aoa_deg=los_aoa,
+)</code></pre>
+        </article>
       </div>
     </section>
 
